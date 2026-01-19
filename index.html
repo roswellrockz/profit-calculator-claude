@@ -121,6 +121,55 @@
             background-color: #ffebee;
         }
 
+        /* Sync code section */
+        .sync-code-section {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .sync-code-section label {
+            margin: 0 0 8px 0;
+            font-weight: 600;
+        }
+        .sync-code-input {
+            display: flex;
+            gap: 10px;
+        }
+        .sync-code-input input {
+            flex: 1;
+            margin: 0;
+        }
+        .sync-code-input .btn {
+            width: auto;
+            margin: 0;
+            padding: 12px 20px;
+        }
+        .sync-code-help {
+            font-size: 12px;
+            color: #888;
+            margin-top: 8px;
+        }
+        .sync-code-display {
+            background-color: #e8f5e9;
+            padding: 10px 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .sync-code-display .code {
+            font-weight: 600;
+            color: #2e7d32;
+        }
+        .sync-code-display .btn {
+            width: auto;
+            margin: 0;
+            padding: 8px 15px;
+            font-size: 14px;
+        }
+
         /* Sync status indicator */
         .sync-status {
             text-align: center;
@@ -369,8 +418,18 @@
     <div class="app-container">
         <h1>Profit Calculator</h1>
 
+        <!-- Sync Code Section -->
+        <div id="syncCodeSection" class="sync-code-section">
+            <label for="syncCode">Your Sync Code:</label>
+            <div class="sync-code-input">
+                <input type="text" id="syncCode" placeholder="Enter a code (e.g. mycode123)" maxlength="30">
+                <button class="btn" onclick="setSyncCode()">Sync</button>
+            </div>
+            <div class="sync-code-help">Use the same code on all your devices to sync data</div>
+        </div>
+
         <!-- Sync Status -->
-        <div id="syncStatus" class="sync-status syncing">Connecting...</div>
+        <div id="syncStatus" class="sync-status syncing" style="display:none;">Connecting...</div>
 
         <!-- Tabs for eBay/Vinted -->
         <div class="tabs">
@@ -527,7 +586,7 @@
         let salesHistory = [];
         let currentEbayCalc = null;
         let currentVintedCalc = null;
-        let userId = null;
+        let syncCode = null;
         let unsubscribe = null; // For real-time listener
 
         // Update sync status display
@@ -535,27 +594,77 @@
             const el = document.getElementById('syncStatus');
             el.className = 'sync-status ' + status;
             el.textContent = message;
+            el.style.display = 'block';
         }
 
-        // Initialize authentication and data
-        async function initializeApp() {
-            updateSyncStatus('syncing', 'Connecting...');
+        // Set sync code and connect
+        function setSyncCode() {
+            const codeInput = document.getElementById('syncCode');
+            const code = codeInput.value.trim().toLowerCase().replace(/[^a-z0-9]/g, '');
 
-            // Load from localStorage first (for instant display)
-            const saved = localStorage.getItem('salesHistory');
-            if (saved) {
-                salesHistory = JSON.parse(saved);
-                renderHistory();
-                updateSummary();
+            if (code.length < 4) {
+                alert('Please enter a code with at least 4 characters');
+                return;
             }
 
-            // Sign in anonymously
-            try {
-                const userCredential = await auth.signInAnonymously();
-                userId = userCredential.user.uid;
-                console.log('Signed in as:', userId);
+            syncCode = code;
+            localStorage.setItem('syncCode', syncCode);
 
-                // Set up real-time listener for data changes
+            // Update UI to show current code
+            showSyncCodeDisplay();
+
+            // Connect to Firebase with this code
+            connectWithSyncCode();
+        }
+
+        // Show the current sync code
+        function showSyncCodeDisplay() {
+            const section = document.getElementById('syncCodeSection');
+            section.innerHTML = `
+                <div class="sync-code-display">
+                    <span>Sync Code: <span class="code">${syncCode}</span></span>
+                    <button class="btn btn-secondary" onclick="changeSyncCode()">Change</button>
+                </div>
+            `;
+        }
+
+        // Allow changing sync code
+        function changeSyncCode() {
+            // Stop current listener
+            if (unsubscribe) {
+                unsubscribe();
+                unsubscribe = null;
+            }
+
+            // Clear local data
+            syncCode = null;
+            localStorage.removeItem('syncCode');
+            salesHistory = [];
+            renderHistory();
+            updateSummary();
+
+            // Reset UI
+            const section = document.getElementById('syncCodeSection');
+            section.innerHTML = `
+                <label for="syncCode">Your Sync Code:</label>
+                <div class="sync-code-input">
+                    <input type="text" id="syncCode" placeholder="Enter a code (e.g. mycode123)" maxlength="30">
+                    <button class="btn" onclick="setSyncCode()">Sync</button>
+                </div>
+                <div class="sync-code-help">Use the same code on all your devices to sync data</div>
+            `;
+            document.getElementById('syncStatus').style.display = 'none';
+        }
+
+        // Connect to Firebase using sync code
+        async function connectWithSyncCode() {
+            updateSyncStatus('syncing', 'Connecting...');
+
+            try {
+                // Sign in anonymously (just to authenticate with Firebase)
+                await auth.signInAnonymously();
+
+                // Set up real-time listener using sync code as document ID
                 setupRealtimeSync();
 
             } catch (error) {
@@ -564,12 +673,32 @@
             }
         }
 
+        // Initialize app
+        function initializeApp() {
+            // Check if we have a saved sync code
+            const savedCode = localStorage.getItem('syncCode');
+
+            if (savedCode) {
+                syncCode = savedCode;
+                showSyncCodeDisplay();
+                connectWithSyncCode();
+            }
+
+            // Load from localStorage for instant display
+            const saved = localStorage.getItem('salesHistory_' + (syncCode || 'local'));
+            if (saved) {
+                salesHistory = JSON.parse(saved);
+                renderHistory();
+                updateSummary();
+            }
+        }
+
         // Set up real-time sync with Firestore
         function setupRealtimeSync() {
-            if (!userId) return;
+            if (!syncCode) return;
 
-            // Listen for changes in real-time
-            unsubscribe = db.collection('users').doc(userId).collection('sales')
+            // Listen for changes in real-time using syncCode as the document ID
+            unsubscribe = db.collection('syncCodes').doc(syncCode).collection('sales')
                 .orderBy('date', 'desc')
                 .onSnapshot((snapshot) => {
                     salesHistory = [];
@@ -578,7 +707,7 @@
                     });
 
                     // Save to localStorage as backup
-                    localStorage.setItem('salesHistory', JSON.stringify(salesHistory));
+                    localStorage.setItem('salesHistory_' + syncCode, JSON.stringify(salesHistory));
 
                     renderHistory();
                     updateSummary();
@@ -591,30 +720,36 @@
 
         // Save a single sale to Firestore
         async function saveSaleToCloud(sale) {
-            if (!userId) {
+            if (!syncCode) {
                 // Offline mode - just save locally
-                localStorage.setItem('salesHistory', JSON.stringify(salesHistory));
+                salesHistory.unshift(sale);
+                localStorage.setItem('salesHistory_local', JSON.stringify(salesHistory));
+                renderHistory();
+                updateSummary();
                 return;
             }
 
             updateSyncStatus('syncing', 'Saving...');
             try {
-                await db.collection('users').doc(userId).collection('sales').add(sale);
+                await db.collection('syncCodes').doc(syncCode).collection('sales').add(sale);
                 // Real-time listener will update the UI
             } catch (error) {
                 console.error('Save error:', error);
                 updateSyncStatus('offline', 'Save failed - stored locally');
-                localStorage.setItem('salesHistory', JSON.stringify(salesHistory));
+                salesHistory.unshift(sale);
+                localStorage.setItem('salesHistory_' + syncCode, JSON.stringify(salesHistory));
+                renderHistory();
+                updateSummary();
             }
         }
 
         // Update a sale in Firestore
         async function updateSaleInCloud(saleId, updates) {
-            if (!userId || !saleId) return;
+            if (!syncCode || !saleId) return;
 
             updateSyncStatus('syncing', 'Updating...');
             try {
-                await db.collection('users').doc(userId).collection('sales').doc(saleId).update(updates);
+                await db.collection('syncCodes').doc(syncCode).collection('sales').doc(saleId).update(updates);
             } catch (error) {
                 console.error('Update error:', error);
                 updateSyncStatus('offline', 'Update failed');
@@ -623,11 +758,11 @@
 
         // Delete a sale from Firestore
         async function deleteSaleFromCloud(saleId) {
-            if (!userId || !saleId) return;
+            if (!syncCode || !saleId) return;
 
             updateSyncStatus('syncing', 'Deleting...');
             try {
-                await db.collection('users').doc(userId).collection('sales').doc(saleId).delete();
+                await db.collection('syncCodes').doc(syncCode).collection('sales').doc(saleId).delete();
             } catch (error) {
                 console.error('Delete error:', error);
                 updateSyncStatus('offline', 'Delete failed');
@@ -636,11 +771,11 @@
 
         // Clear all sales from Firestore
         async function clearAllFromCloud() {
-            if (!userId) return;
+            if (!syncCode) return;
 
             updateSyncStatus('syncing', 'Clearing...');
             try {
-                const snapshot = await db.collection('users').doc(userId).collection('sales').get();
+                const snapshot = await db.collection('syncCodes').doc(syncCode).collection('sales').get();
                 const batch = db.batch();
                 snapshot.docs.forEach(doc => batch.delete(doc.ref));
                 await batch.commit();
