@@ -1,0 +1,934 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Profit Calculator & Tracker</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        /* Reset and base styles */
+        body, h1, h2, h3, label, input {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            background-color: #f0f2f5;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .app-container {
+            background-color: #fff;
+            padding: 30px 40px;
+            border-radius: 12px;
+            box-shadow: 0 6px 12px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 500px;
+            margin-bottom: 20px;
+        }
+        .wide-container {
+            max-width: 800px;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+            font-size: 28px;
+            margin-bottom: 20px;
+        }
+        h2 {
+            text-align: center;
+            color: #333;
+            font-size: 24px;
+            margin-bottom: 15px;
+        }
+        h3 {
+            color: #333;
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
+        label {
+            display: block;
+            margin-top: 15px;
+            font-size: 16px;
+            color: #555;
+        }
+        input[type="number"],
+        input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            margin-top: 6px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+        }
+        input:focus {
+            outline: none;
+            border-color: #007bff;
+        }
+        .btn {
+            width: 100%;
+            padding: 15px;
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            margin-top: 20px;
+            font-size: 18px;
+            cursor: pointer;
+        }
+        .btn:hover {
+            background-color: #0056b3;
+        }
+        .btn-success {
+            background-color: #28a745;
+        }
+        .btn-success:hover {
+            background-color: #1e7e34;
+        }
+        .btn-secondary {
+            background-color: #6c757d;
+        }
+        .btn-secondary:hover {
+            background-color: #545b62;
+        }
+        .btn-danger {
+            background-color: #dc3545;
+            padding: 8px 12px;
+            font-size: 14px;
+            width: auto;
+            margin: 0;
+        }
+        .btn-danger:hover {
+            background-color: #c82333;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #e8f5e9;
+            border-radius: 8px;
+            text-align: center;
+            font-size: 18px;
+            color: #333;
+            display: none;
+        }
+        .result.show {
+            display: block;
+        }
+        .result.loss {
+            background-color: #ffebee;
+        }
+
+        /* Search box */
+        .search-box {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .search-box input {
+            flex: 1;
+            margin: 0;
+        }
+        .search-box .btn {
+            width: auto;
+            margin: 0;
+            padding: 12px 20px;
+        }
+
+        /* History table */
+        .history-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            font-size: 14px;
+        }
+        .history-table th,
+        .history-table td {
+            padding: 10px 8px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+        .history-table th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+            color: #555;
+            position: sticky;
+            top: 0;
+        }
+        .history-table tr:hover {
+            background-color: #f8f9fa;
+        }
+        .history-table .profit-positive {
+            color: #28a745;
+            font-weight: 600;
+        }
+        .history-table .profit-negative {
+            color: #dc3545;
+            font-weight: 600;
+        }
+        .platform-badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        .platform-ebay {
+            background-color: #e3f2fd;
+            color: #1565c0;
+        }
+        .platform-vinted {
+            background-color: #fce4ec;
+            color: #c2185b;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        .status-sold {
+            background-color: #e8f5e9;
+            color: #2e7d32;
+        }
+        .status-refunded {
+            background-color: #ffebee;
+            color: #c62828;
+        }
+        .row-refunded {
+            background-color: #fff8f8;
+            opacity: 0.7;
+        }
+        .row-refunded td {
+            text-decoration: line-through;
+            color: #999;
+        }
+        .row-refunded .status-badge,
+        .row-refunded .btn {
+            text-decoration: none;
+        }
+        .btn-warning {
+            background-color: #ff9800;
+            padding: 8px 12px;
+            font-size: 12px;
+            width: auto;
+            margin: 0;
+        }
+        .btn-warning:hover {
+            background-color: #f57c00;
+        }
+        .btn-undo {
+            background-color: #9e9e9e;
+            padding: 8px 12px;
+            font-size: 12px;
+            width: auto;
+            margin: 0;
+        }
+        .btn-undo:hover {
+            background-color: #757575;
+        }
+        .filter-info {
+            background-color: #e3f2fd;
+            padding: 12px 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            text-align: center;
+            color: #1565c0;
+            font-weight: 500;
+        }
+        .sync-info {
+            background-color: #fff3e0;
+            padding: 12px 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            text-align: center;
+            color: #e65100;
+            font-size: 14px;
+        }
+        .table-wrapper {
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid #eee;
+            border-radius: 8px;
+        }
+        .no-results {
+            text-align: center;
+            padding: 30px;
+            color: #888;
+        }
+        .summary {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 15px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+        }
+        .summary-item {
+            text-align: center;
+        }
+        .summary-item .label {
+            font-size: 12px;
+            color: #888;
+            margin-bottom: 5px;
+        }
+        .summary-item .value {
+            font-size: 20px;
+            font-weight: 600;
+            color: #333;
+        }
+        .summary-item .value.positive {
+            color: #28a745;
+        }
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        .action-buttons .btn {
+            flex: 1;
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #eee;
+        }
+        .tab {
+            flex: 1;
+            padding: 12px;
+            text-align: center;
+            cursor: pointer;
+            color: #888;
+            font-weight: 500;
+            border-bottom: 2px solid transparent;
+            margin-bottom: -2px;
+        }
+        .tab.active {
+            color: #007bff;
+            border-bottom-color: #007bff;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Responsive */
+        @media (max-width: 600px) {
+            .app-container {
+                padding: 20px;
+            }
+            .history-table {
+                font-size: 12px;
+            }
+            .history-table th,
+            .history-table td {
+                padding: 8px 4px;
+            }
+            .summary {
+                flex-wrap: wrap;
+                gap: 10px;
+            }
+            .summary-item {
+                flex: 1 1 45%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Calculator Section -->
+    <div class="app-container">
+        <h1>Profit Calculator</h1>
+
+        <!-- Tabs for eBay/Vinted -->
+        <div class="tabs">
+            <div class="tab active" onclick="switchTab('ebay')">eBay</div>
+            <div class="tab" onclick="switchTab('vinted')">Vinted</div>
+        </div>
+
+        <!-- eBay Form -->
+        <div id="ebayTab" class="tab-content active">
+            <form onsubmit="calculateEbay(); return false;">
+                <label for="ebayItemName">Item Name:</label>
+                <input type="text" id="ebayItemName" placeholder="e.g. PS3 Ratatouille" required>
+
+                <label for="ebayNetProceeds">Net Proceeds from eBay (£):</label>
+                <input type="number" id="ebayNetProceeds" step="0.01" placeholder="0.00" required>
+
+                <label for="ebayCost">Cost of Goods (£):</label>
+                <input type="number" id="ebayCost" step="0.01" placeholder="0.00" required>
+
+                <label for="ebayShipping">Shipping Cost (£):</label>
+                <input type="number" id="ebayShipping" step="0.01" placeholder="0.00" required>
+
+                <button type="submit" class="btn">Calculate</button>
+            </form>
+            <div id="ebayResult" class="result"></div>
+            <button class="btn btn-success" id="ebayAddBtn" onclick="addEbayToHistory()" style="display:none;">Add to History</button>
+        </div>
+
+        <!-- Vinted Form -->
+        <div id="vintedTab" class="tab-content">
+            <form onsubmit="calculateVinted(); return false;">
+                <label for="vintedItemName">Item Name:</label>
+                <input type="text" id="vintedItemName" placeholder="e.g. Nike Trainers" required>
+
+                <label for="vintedSalePrice">Sale Price (£):</label>
+                <input type="number" id="vintedSalePrice" step="0.01" placeholder="0.00" required>
+
+                <label for="vintedCost">Cost of Goods (£):</label>
+                <input type="number" id="vintedCost" step="0.01" placeholder="0.00" required>
+
+                <button type="submit" class="btn">Calculate</button>
+            </form>
+            <div id="vintedResult" class="result"></div>
+            <button class="btn btn-success" id="vintedAddBtn" onclick="addVintedToHistory()" style="display:none;">Add to History</button>
+        </div>
+    </div>
+
+    <!-- Sales History Section -->
+    <div class="app-container wide-container">
+        <h2>Sales History</h2>
+
+        <!-- Date Filter -->
+        <div class="search-box">
+            <input type="date" id="dateFilter" onchange="filterHistory()">
+            <button class="btn btn-secondary" onclick="clearDateFilter()">Show All Dates</button>
+        </div>
+
+        <!-- Search -->
+        <div class="search-box">
+            <input type="text" id="searchInput" placeholder="Search by item name..." oninput="filterHistory()">
+            <button class="btn" onclick="filterHistory()">Search</button>
+        </div>
+
+        <!-- Filter Info -->
+        <div id="filterInfo" class="filter-info" style="display:none;"></div>
+
+        <!-- Summary Stats -->
+        <div class="summary">
+            <div class="summary-item">
+                <div class="label">Total Sales</div>
+                <div class="value" id="totalSales">0</div>
+            </div>
+            <div class="summary-item">
+                <div class="label">Refunds</div>
+                <div class="value" id="totalRefunds" style="color: #c62828;">0</div>
+            </div>
+            <div class="summary-item">
+                <div class="label">Total Revenue</div>
+                <div class="value" id="totalRevenue">£0.00</div>
+            </div>
+            <div class="summary-item">
+                <div class="label">Total Tax</div>
+                <div class="value" id="totalTax">£0.00</div>
+            </div>
+            <div class="summary-item">
+                <div class="label">Net Profit</div>
+                <div class="value positive" id="totalProfit">£0.00</div>
+            </div>
+        </div>
+
+        <!-- History Table -->
+        <div class="table-wrapper">
+            <table class="history-table">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Item</th>
+                        <th>Platform</th>
+                        <th>Status</th>
+                        <th>COG</th>
+                        <th>Payout</th>
+                        <th>Ship</th>
+                        <th>Tax</th>
+                        <th>Profit</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="historyBody">
+                </tbody>
+            </table>
+            <div class="no-results" id="noResults" style="display:none;">
+                No sales found. Add your first sale above!
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="action-buttons">
+            <button class="btn btn-secondary" onclick="exportCSV()">Export CSV</button>
+            <button class="btn" onclick="exportJSON()">Backup Data</button>
+            <button class="btn btn-success" onclick="document.getElementById('importFile').click()">Restore Data</button>
+            <input type="file" id="importFile" accept=".json" onchange="importJSON(event)" style="display:none;">
+            <button class="btn btn-danger" onclick="clearAllHistory()">Clear All</button>
+        </div>
+
+        <!-- Sync Instructions -->
+        <div class="sync-info">
+            <strong>Sync across devices:</strong> Click "Backup Data" → Save to Google Drive → On other device, click "Restore Data"
+        </div>
+    </div>
+
+    <script>
+        // ============================================
+        // DATA STORAGE
+        // ============================================
+        // localStorage saves data in your browser
+        // It persists even when you close the browser
+
+        let salesHistory = [];
+        let currentEbayCalc = null;
+        let currentVintedCalc = null;
+
+        // Load saved data when page opens
+        function loadHistory() {
+            const saved = localStorage.getItem('salesHistory');
+            if (saved) {
+                salesHistory = JSON.parse(saved);
+            }
+            renderHistory();
+            updateSummary();
+        }
+
+        // Save data to browser storage
+        function saveHistory() {
+            localStorage.setItem('salesHistory', JSON.stringify(salesHistory));
+        }
+
+        // ============================================
+        // TAB SWITCHING
+        // ============================================
+        function switchTab(tab) {
+            // Update tab buttons
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelector(`.tab:${tab === 'ebay' ? 'first' : 'last'}-child`).classList.add('active');
+
+            // Update tab content
+            document.getElementById('ebayTab').classList.toggle('active', tab === 'ebay');
+            document.getElementById('vintedTab').classList.toggle('active', tab === 'vinted');
+        }
+
+        // ============================================
+        // EBAY CALCULATOR
+        // ============================================
+        function calculateEbay() {
+            const itemName = document.getElementById('ebayItemName').value.trim();
+            const netProceeds = parseFloat(document.getElementById('ebayNetProceeds').value) || 0;
+            const cost = parseFloat(document.getElementById('ebayCost').value) || 0;
+            const shipping = parseFloat(document.getElementById('ebayShipping').value) || 0;
+
+            const preTaxProfit = netProceeds - cost - shipping;
+            const tax = preTaxProfit > 0 ? preTaxProfit * 0.20 : 0;
+            const finalProfit = preTaxProfit - tax;
+
+            // Store for adding to history
+            currentEbayCalc = {
+                itemName,
+                netProceeds,
+                cost,
+                shipping,
+                preTaxProfit,
+                tax,
+                finalProfit,
+                platform: 'ebay',
+                date: new Date().toISOString()
+            };
+
+            // Show result
+            const resultDiv = document.getElementById('ebayResult');
+            resultDiv.innerHTML = `
+                <strong>${itemName}</strong><br>
+                Pre-tax Profit: £${preTaxProfit.toFixed(2)}<br>
+                Tax (20%): £${tax.toFixed(2)}<br>
+                <strong>Final Profit: £${finalProfit.toFixed(2)}</strong>
+            `;
+            resultDiv.classList.add('show');
+            resultDiv.classList.toggle('loss', finalProfit < 0);
+
+            // Show add button
+            document.getElementById('ebayAddBtn').style.display = 'block';
+        }
+
+        function addEbayToHistory() {
+            if (currentEbayCalc) {
+                salesHistory.unshift(currentEbayCalc);
+                saveHistory();
+                renderHistory();
+                updateSummary();
+
+                // Reset form
+                document.getElementById('ebayItemName').value = '';
+                document.getElementById('ebayNetProceeds').value = '';
+                document.getElementById('ebayCost').value = '';
+                document.getElementById('ebayShipping').value = '';
+                document.getElementById('ebayResult').classList.remove('show');
+                document.getElementById('ebayAddBtn').style.display = 'none';
+                currentEbayCalc = null;
+
+                // Focus back on item name
+                document.getElementById('ebayItemName').focus();
+            }
+        }
+
+        // ============================================
+        // VINTED CALCULATOR
+        // ============================================
+        function calculateVinted() {
+            const itemName = document.getElementById('vintedItemName').value.trim();
+            const salePrice = parseFloat(document.getElementById('vintedSalePrice').value) || 0;
+            const cost = parseFloat(document.getElementById('vintedCost').value) || 0;
+
+            const preTaxProfit = salePrice - cost;
+            const tax = preTaxProfit > 0 ? preTaxProfit * 0.20 : 0;
+            const finalProfit = preTaxProfit - tax;
+
+            // Store for adding to history
+            currentVintedCalc = {
+                itemName,
+                netProceeds: salePrice,
+                cost,
+                shipping: 0,
+                preTaxProfit,
+                tax,
+                finalProfit,
+                platform: 'vinted',
+                date: new Date().toISOString()
+            };
+
+            // Show result
+            const resultDiv = document.getElementById('vintedResult');
+            resultDiv.innerHTML = `
+                <strong>${itemName}</strong><br>
+                Pre-tax Profit: £${preTaxProfit.toFixed(2)}<br>
+                Tax (20%): £${tax.toFixed(2)}<br>
+                <strong>Final Profit: £${finalProfit.toFixed(2)}</strong>
+            `;
+            resultDiv.classList.add('show');
+            resultDiv.classList.toggle('loss', finalProfit < 0);
+
+            // Show add button
+            document.getElementById('vintedAddBtn').style.display = 'block';
+        }
+
+        function addVintedToHistory() {
+            if (currentVintedCalc) {
+                salesHistory.unshift(currentVintedCalc);
+                saveHistory();
+                renderHistory();
+                updateSummary();
+
+                // Reset form
+                document.getElementById('vintedItemName').value = '';
+                document.getElementById('vintedSalePrice').value = '';
+                document.getElementById('vintedCost').value = '';
+                document.getElementById('vintedResult').classList.remove('show');
+                document.getElementById('vintedAddBtn').style.display = 'none';
+                currentVintedCalc = null;
+
+                // Focus back on item name
+                document.getElementById('vintedItemName').focus();
+            }
+        }
+
+        // ============================================
+        // HISTORY TABLE
+        // ============================================
+        function renderHistory(filteredData = null) {
+            const data = filteredData || salesHistory;
+            const tbody = document.getElementById('historyBody');
+            const noResults = document.getElementById('noResults');
+
+            if (data.length === 0) {
+                tbody.innerHTML = '';
+                noResults.style.display = 'block';
+                return;
+            }
+
+            noResults.style.display = 'none';
+            tbody.innerHTML = data.map((sale, index) => {
+                const date = new Date(sale.date).toLocaleDateString('en-GB');
+                const profitClass = sale.finalProfit >= 0 ? 'profit-positive' : 'profit-negative';
+                const platformClass = sale.platform === 'ebay' ? 'platform-ebay' : 'platform-vinted';
+                const platformLabel = sale.platform === 'ebay' ? 'eBay' : 'Vinted';
+                const isRefunded = sale.refunded === true;
+                const statusClass = isRefunded ? 'status-refunded' : 'status-sold';
+                const statusLabel = isRefunded ? 'Refunded' : 'Sold';
+                const rowClass = isRefunded ? 'row-refunded' : '';
+
+                // Find original index for actions
+                const originalIndex = salesHistory.indexOf(sale);
+
+                // Show different button based on status
+                const actionButton = isRefunded
+                    ? `<button class="btn btn-undo" onclick="toggleRefund(${originalIndex})">Undo</button>`
+                    : `<button class="btn btn-warning" onclick="toggleRefund(${originalIndex})">Refund</button>`;
+
+                return `
+                    <tr class="${rowClass}">
+                        <td>${date}</td>
+                        <td>${sale.itemName}</td>
+                        <td><span class="platform-badge ${platformClass}">${platformLabel}</span></td>
+                        <td><span class="status-badge ${statusClass}">${statusLabel}</span></td>
+                        <td>£${sale.cost.toFixed(2)}</td>
+                        <td>£${sale.netProceeds.toFixed(2)}</td>
+                        <td>£${sale.shipping.toFixed(2)}</td>
+                        <td>£${sale.tax.toFixed(2)}</td>
+                        <td class="${profitClass}">£${sale.finalProfit.toFixed(2)}</td>
+                        <td>
+                            ${actionButton}
+                            <button class="btn btn-danger" onclick="deleteSale(${originalIndex})">X</button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // ============================================
+        // REFUND TOGGLE
+        // ============================================
+        function toggleRefund(index) {
+            const sale = salesHistory[index];
+            const action = sale.refunded ? 'mark as sold again' : 'mark as refunded';
+
+            if (confirm(`Are you sure you want to ${action} "${sale.itemName}"?`)) {
+                salesHistory[index].refunded = !sale.refunded;
+                saveHistory();
+                renderHistory();
+                updateSummary();
+            }
+        }
+
+        // ============================================
+        // SEARCH / FILTER
+        // ============================================
+        function filterHistory() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase().trim();
+            const dateFilter = document.getElementById('dateFilter').value;
+            const filterInfo = document.getElementById('filterInfo');
+
+            let filtered = salesHistory;
+
+            // Filter by date if selected
+            if (dateFilter) {
+                filtered = filtered.filter(sale => {
+                    const saleDate = new Date(sale.date).toISOString().slice(0, 10);
+                    return saleDate === dateFilter;
+                });
+
+                // Format date for display
+                const displayDate = new Date(dateFilter).toLocaleDateString('en-GB', {
+                    weekday: 'long',
+                    day: 'numeric',
+                    month: 'long',
+                    year: 'numeric'
+                });
+                filterInfo.innerHTML = `Showing sales for <strong>${displayDate}</strong>`;
+                filterInfo.style.display = 'block';
+            } else {
+                filterInfo.style.display = 'none';
+            }
+
+            // Filter by search term if entered
+            if (searchTerm) {
+                filtered = filtered.filter(sale =>
+                    sale.itemName.toLowerCase().includes(searchTerm)
+                );
+            }
+
+            renderHistory(filtered);
+            updateSummary(filtered);
+        }
+
+        function clearDateFilter() {
+            document.getElementById('dateFilter').value = '';
+            document.getElementById('searchInput').value = '';
+            filterHistory();
+        }
+
+        // ============================================
+        // SUMMARY STATS
+        // ============================================
+        function updateSummary(data = null) {
+            const sales = data || salesHistory;
+
+            // Separate sold and refunded items
+            const soldItems = sales.filter(s => !s.refunded);
+            const refundedItems = sales.filter(s => s.refunded);
+
+            // Calculate totals (only count non-refunded items)
+            const totalSales = soldItems.length;
+            const totalRefunds = refundedItems.length;
+            const totalRevenue = soldItems.reduce((sum, s) => sum + s.netProceeds, 0);
+            const totalTax = soldItems.reduce((sum, s) => sum + s.tax, 0);
+            const totalProfit = soldItems.reduce((sum, s) => sum + s.finalProfit, 0);
+
+            document.getElementById('totalSales').textContent = totalSales;
+            document.getElementById('totalRefunds').textContent = totalRefunds;
+            document.getElementById('totalRevenue').textContent = '£' + totalRevenue.toFixed(2);
+            document.getElementById('totalTax').textContent = '£' + totalTax.toFixed(2);
+            document.getElementById('totalProfit').textContent = '£' + totalProfit.toFixed(2);
+
+            // Color the profit
+            const profitEl = document.getElementById('totalProfit');
+            profitEl.classList.toggle('positive', totalProfit >= 0);
+        }
+
+        // ============================================
+        // DELETE / CLEAR
+        // ============================================
+        function deleteSale(index) {
+            if (confirm('Delete this sale?')) {
+                salesHistory.splice(index, 1);
+                saveHistory();
+                renderHistory();
+                updateSummary();
+            }
+        }
+
+        function clearAllHistory() {
+            if (confirm('Delete ALL sales history? This cannot be undone!')) {
+                salesHistory = [];
+                saveHistory();
+                renderHistory();
+                updateSummary();
+            }
+        }
+
+        // ============================================
+        // EXPORT TO CSV
+        // ============================================
+        function exportCSV() {
+            if (salesHistory.length === 0) {
+                alert('No sales to export!');
+                return;
+            }
+
+            // CSV header
+            let csv = 'Date,Item Name,Platform,Status,Cost of Goods,Net Proceeds,Shipping,Tax,Final Profit\n';
+
+            // CSV rows
+            salesHistory.forEach(sale => {
+                const date = new Date(sale.date).toLocaleDateString('en-GB');
+                const status = sale.refunded ? 'Refunded' : 'Sold';
+                csv += `"${date}","${sale.itemName}","${sale.platform}","${status}",${sale.cost.toFixed(2)},${sale.netProceeds.toFixed(2)},${sale.shipping.toFixed(2)},${sale.tax.toFixed(2)},${sale.finalProfit.toFixed(2)}\n`;
+            });
+
+            // Download file
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'sales_history_' + new Date().toISOString().slice(0,10) + '.csv';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        // ============================================
+        // BACKUP & RESTORE (JSON)
+        // ============================================
+        function exportJSON() {
+            if (salesHistory.length === 0) {
+                alert('No sales to backup!');
+                return;
+            }
+
+            // Create backup object with metadata
+            const backup = {
+                version: 1,
+                exportDate: new Date().toISOString(),
+                salesCount: salesHistory.length,
+                data: salesHistory
+            };
+
+            // Download as JSON file
+            const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'profit_tracker_backup_' + new Date().toISOString().slice(0,10) + '.json';
+            a.click();
+            URL.revokeObjectURL(url);
+
+            alert('Backup saved! Store this file in iCloud Drive to access from other devices.');
+        }
+
+        function importJSON(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const backup = JSON.parse(e.target.result);
+
+                    // Validate backup file
+                    if (!backup.data || !Array.isArray(backup.data)) {
+                        alert('Invalid backup file!');
+                        return;
+                    }
+
+                    // Ask user how to handle existing data
+                    const existingCount = salesHistory.length;
+                    const importCount = backup.data.length;
+
+                    let action;
+                    if (existingCount > 0) {
+                        action = confirm(
+                            `You have ${existingCount} existing sales.\n` +
+                            `Backup contains ${importCount} sales.\n\n` +
+                            `OK = Replace all data with backup\n` +
+                            `Cancel = Merge (add backup to existing)`
+                        );
+
+                        if (action) {
+                            // Replace
+                            salesHistory = backup.data;
+                        } else {
+                            // Merge - add imported items that don't exist
+                            backup.data.forEach(importedSale => {
+                                const exists = salesHistory.some(s =>
+                                    s.date === importedSale.date &&
+                                    s.itemName === importedSale.itemName &&
+                                    s.netProceeds === importedSale.netProceeds
+                                );
+                                if (!exists) {
+                                    salesHistory.push(importedSale);
+                                }
+                            });
+                            // Sort by date (newest first)
+                            salesHistory.sort((a, b) => new Date(b.date) - new Date(a.date));
+                        }
+                    } else {
+                        salesHistory = backup.data;
+                    }
+
+                    saveHistory();
+                    renderHistory();
+                    updateSummary();
+
+                    alert(`Restored ${backup.data.length} sales from backup!`);
+
+                } catch (error) {
+                    alert('Error reading backup file: ' + error.message);
+                }
+            };
+            reader.readAsText(file);
+
+            // Reset file input so same file can be selected again
+            event.target.value = '';
+        }
+
+        // ============================================
+        // INITIALIZE
+        // ============================================
+        // Load history when page loads
+        loadHistory();
+    </script>
+</body>
+</html>
