@@ -121,6 +121,27 @@
             background-color: #ffebee;
         }
 
+        /* Sync status indicator */
+        .sync-status {
+            text-align: center;
+            padding: 8px;
+            font-size: 12px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+        .sync-status.synced {
+            background-color: #e8f5e9;
+            color: #2e7d32;
+        }
+        .sync-status.syncing {
+            background-color: #fff3e0;
+            color: #e65100;
+        }
+        .sync-status.offline {
+            background-color: #ffebee;
+            color: #c62828;
+        }
+
         /* Search box */
         .search-box {
             display: flex;
@@ -240,12 +261,12 @@
             font-weight: 500;
         }
         .sync-info {
-            background-color: #fff3e0;
+            background-color: #e8f5e9;
             padding: 12px 15px;
             border-radius: 8px;
             margin-top: 15px;
             text-align: center;
-            color: #e65100;
+            color: #2e7d32;
             font-size: 14px;
         }
         .table-wrapper {
@@ -287,9 +308,11 @@
             display: flex;
             gap: 10px;
             margin-top: 15px;
+            flex-wrap: wrap;
         }
         .action-buttons .btn {
             flex: 1;
+            min-width: 120px;
         }
 
         /* Tabs */
@@ -345,6 +368,9 @@
     <!-- Calculator Section -->
     <div class="app-container">
         <h1>Profit Calculator</h1>
+
+        <!-- Sync Status -->
+        <div id="syncStatus" class="sync-status syncing">Connecting...</div>
 
         <!-- Tabs for eBay/Vinted -->
         <div class="tabs">
@@ -463,53 +489,173 @@
         <!-- Action Buttons -->
         <div class="action-buttons">
             <button class="btn btn-secondary" onclick="exportCSV()">Export CSV</button>
-            <button class="btn" onclick="exportJSON()">Backup Data</button>
-            <button class="btn btn-success" onclick="document.getElementById('importFile').click()">Restore Data</button>
-            <input type="file" id="importFile" accept=".json" onchange="importJSON(event)" style="display:none;">
             <button class="btn btn-danger" onclick="clearAllHistory()">Clear All</button>
         </div>
 
-        <!-- Sync Instructions -->
+        <!-- Sync Info -->
         <div class="sync-info">
-            <strong>Sync across devices:</strong> Click "Backup Data" → Save to Google Drive → On other device, click "Restore Data"
+            <strong>Auto-sync enabled!</strong> Your data syncs automatically between all your devices.
         </div>
     </div>
 
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
     <script>
+        // ============================================
+        // FIREBASE CONFIGURATION
+        // ============================================
+        const firebaseConfig = {
+            apiKey: "AIzaSyD3W4BlPqO8T9r0PkWhbfecbOHZ4aO1vaM",
+            authDomain: "profit-calculator-92c66.firebaseapp.com",
+            projectId: "profit-calculator-92c66",
+            storageBucket: "profit-calculator-92c66.firebasestorage.app",
+            messagingSenderId: "641770974955",
+            appId: "1:641770974955:web:9ac1ec9f84dcf1a8c8d8ae"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
         // ============================================
         // DATA STORAGE
         // ============================================
-        // localStorage saves data in your browser
-        // It persists even when you close the browser
-
         let salesHistory = [];
         let currentEbayCalc = null;
         let currentVintedCalc = null;
+        let userId = null;
+        let unsubscribe = null; // For real-time listener
 
-        // Load saved data when page opens
-        function loadHistory() {
+        // Update sync status display
+        function updateSyncStatus(status, message) {
+            const el = document.getElementById('syncStatus');
+            el.className = 'sync-status ' + status;
+            el.textContent = message;
+        }
+
+        // Initialize authentication and data
+        async function initializeApp() {
+            updateSyncStatus('syncing', 'Connecting...');
+
+            // Load from localStorage first (for instant display)
             const saved = localStorage.getItem('salesHistory');
             if (saved) {
                 salesHistory = JSON.parse(saved);
+                renderHistory();
+                updateSummary();
             }
-            renderHistory();
-            updateSummary();
+
+            // Sign in anonymously
+            try {
+                const userCredential = await auth.signInAnonymously();
+                userId = userCredential.user.uid;
+                console.log('Signed in as:', userId);
+
+                // Set up real-time listener for data changes
+                setupRealtimeSync();
+
+            } catch (error) {
+                console.error('Auth error:', error);
+                updateSyncStatus('offline', 'Offline mode (data saved locally)');
+            }
         }
 
-        // Save data to browser storage
-        function saveHistory() {
-            localStorage.setItem('salesHistory', JSON.stringify(salesHistory));
+        // Set up real-time sync with Firestore
+        function setupRealtimeSync() {
+            if (!userId) return;
+
+            // Listen for changes in real-time
+            unsubscribe = db.collection('users').doc(userId).collection('sales')
+                .orderBy('date', 'desc')
+                .onSnapshot((snapshot) => {
+                    salesHistory = [];
+                    snapshot.forEach(doc => {
+                        salesHistory.push({ id: doc.id, ...doc.data() });
+                    });
+
+                    // Save to localStorage as backup
+                    localStorage.setItem('salesHistory', JSON.stringify(salesHistory));
+
+                    renderHistory();
+                    updateSummary();
+                    updateSyncStatus('synced', 'Synced across all devices');
+                }, (error) => {
+                    console.error('Sync error:', error);
+                    updateSyncStatus('offline', 'Offline mode');
+                });
+        }
+
+        // Save a single sale to Firestore
+        async function saveSaleToCloud(sale) {
+            if (!userId) {
+                // Offline mode - just save locally
+                localStorage.setItem('salesHistory', JSON.stringify(salesHistory));
+                return;
+            }
+
+            updateSyncStatus('syncing', 'Saving...');
+            try {
+                await db.collection('users').doc(userId).collection('sales').add(sale);
+                // Real-time listener will update the UI
+            } catch (error) {
+                console.error('Save error:', error);
+                updateSyncStatus('offline', 'Save failed - stored locally');
+                localStorage.setItem('salesHistory', JSON.stringify(salesHistory));
+            }
+        }
+
+        // Update a sale in Firestore
+        async function updateSaleInCloud(saleId, updates) {
+            if (!userId || !saleId) return;
+
+            updateSyncStatus('syncing', 'Updating...');
+            try {
+                await db.collection('users').doc(userId).collection('sales').doc(saleId).update(updates);
+            } catch (error) {
+                console.error('Update error:', error);
+                updateSyncStatus('offline', 'Update failed');
+            }
+        }
+
+        // Delete a sale from Firestore
+        async function deleteSaleFromCloud(saleId) {
+            if (!userId || !saleId) return;
+
+            updateSyncStatus('syncing', 'Deleting...');
+            try {
+                await db.collection('users').doc(userId).collection('sales').doc(saleId).delete();
+            } catch (error) {
+                console.error('Delete error:', error);
+                updateSyncStatus('offline', 'Delete failed');
+            }
+        }
+
+        // Clear all sales from Firestore
+        async function clearAllFromCloud() {
+            if (!userId) return;
+
+            updateSyncStatus('syncing', 'Clearing...');
+            try {
+                const snapshot = await db.collection('users').doc(userId).collection('sales').get();
+                const batch = db.batch();
+                snapshot.docs.forEach(doc => batch.delete(doc.ref));
+                await batch.commit();
+            } catch (error) {
+                console.error('Clear error:', error);
+                updateSyncStatus('offline', 'Clear failed');
+            }
         }
 
         // ============================================
         // TAB SWITCHING
         // ============================================
         function switchTab(tab) {
-            // Update tab buttons
             document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
             document.querySelector(`.tab:${tab === 'ebay' ? 'first' : 'last'}-child`).classList.add('active');
-
-            // Update tab content
             document.getElementById('ebayTab').classList.toggle('active', tab === 'ebay');
             document.getElementById('vintedTab').classList.toggle('active', tab === 'vinted');
         }
@@ -527,7 +673,6 @@
             const tax = preTaxProfit > 0 ? preTaxProfit * 0.20 : 0;
             const finalProfit = preTaxProfit - tax;
 
-            // Store for adding to history
             currentEbayCalc = {
                 itemName,
                 netProceeds,
@@ -537,10 +682,10 @@
                 tax,
                 finalProfit,
                 platform: 'ebay',
-                date: new Date().toISOString()
+                date: new Date().toISOString(),
+                refunded: false
             };
 
-            // Show result
             const resultDiv = document.getElementById('ebayResult');
             resultDiv.innerHTML = `
                 <strong>${itemName}</strong><br>
@@ -550,19 +695,13 @@
             `;
             resultDiv.classList.add('show');
             resultDiv.classList.toggle('loss', finalProfit < 0);
-
-            // Show add button
             document.getElementById('ebayAddBtn').style.display = 'block';
         }
 
         function addEbayToHistory() {
             if (currentEbayCalc) {
-                salesHistory.unshift(currentEbayCalc);
-                saveHistory();
-                renderHistory();
-                updateSummary();
+                saveSaleToCloud(currentEbayCalc);
 
-                // Reset form
                 document.getElementById('ebayItemName').value = '';
                 document.getElementById('ebayNetProceeds').value = '';
                 document.getElementById('ebayCost').value = '';
@@ -570,8 +709,6 @@
                 document.getElementById('ebayResult').classList.remove('show');
                 document.getElementById('ebayAddBtn').style.display = 'none';
                 currentEbayCalc = null;
-
-                // Focus back on item name
                 document.getElementById('ebayItemName').focus();
             }
         }
@@ -588,7 +725,6 @@
             const tax = preTaxProfit > 0 ? preTaxProfit * 0.20 : 0;
             const finalProfit = preTaxProfit - tax;
 
-            // Store for adding to history
             currentVintedCalc = {
                 itemName,
                 netProceeds: salePrice,
@@ -598,10 +734,10 @@
                 tax,
                 finalProfit,
                 platform: 'vinted',
-                date: new Date().toISOString()
+                date: new Date().toISOString(),
+                refunded: false
             };
 
-            // Show result
             const resultDiv = document.getElementById('vintedResult');
             resultDiv.innerHTML = `
                 <strong>${itemName}</strong><br>
@@ -611,27 +747,19 @@
             `;
             resultDiv.classList.add('show');
             resultDiv.classList.toggle('loss', finalProfit < 0);
-
-            // Show add button
             document.getElementById('vintedAddBtn').style.display = 'block';
         }
 
         function addVintedToHistory() {
             if (currentVintedCalc) {
-                salesHistory.unshift(currentVintedCalc);
-                saveHistory();
-                renderHistory();
-                updateSummary();
+                saveSaleToCloud(currentVintedCalc);
 
-                // Reset form
                 document.getElementById('vintedItemName').value = '';
                 document.getElementById('vintedSalePrice').value = '';
                 document.getElementById('vintedCost').value = '';
                 document.getElementById('vintedResult').classList.remove('show');
                 document.getElementById('vintedAddBtn').style.display = 'none';
                 currentVintedCalc = null;
-
-                // Focus back on item name
                 document.getElementById('vintedItemName').focus();
             }
         }
@@ -661,13 +789,10 @@
                 const statusLabel = isRefunded ? 'Refunded' : 'Sold';
                 const rowClass = isRefunded ? 'row-refunded' : '';
 
-                // Find original index for actions
-                const originalIndex = salesHistory.indexOf(sale);
-
-                // Show different button based on status
+                const saleId = sale.id || index;
                 const actionButton = isRefunded
-                    ? `<button class="btn btn-undo" onclick="toggleRefund(${originalIndex})">Undo</button>`
-                    : `<button class="btn btn-warning" onclick="toggleRefund(${originalIndex})">Refund</button>`;
+                    ? `<button class="btn btn-undo" onclick="toggleRefund('${saleId}', false)">Undo</button>`
+                    : `<button class="btn btn-warning" onclick="toggleRefund('${saleId}', true)">Refund</button>`;
 
                 return `
                     <tr class="${rowClass}">
@@ -682,7 +807,7 @@
                         <td class="${profitClass}">£${sale.finalProfit.toFixed(2)}</td>
                         <td>
                             ${actionButton}
-                            <button class="btn btn-danger" onclick="deleteSale(${originalIndex})">X</button>
+                            <button class="btn btn-danger" onclick="deleteSale('${saleId}')">X</button>
                         </td>
                     </tr>
                 `;
@@ -692,15 +817,13 @@
         // ============================================
         // REFUND TOGGLE
         // ============================================
-        function toggleRefund(index) {
-            const sale = salesHistory[index];
-            const action = sale.refunded ? 'mark as sold again' : 'mark as refunded';
+        function toggleRefund(saleId, setRefunded) {
+            const sale = salesHistory.find(s => s.id === saleId);
+            if (!sale) return;
 
+            const action = setRefunded ? 'mark as refunded' : 'mark as sold again';
             if (confirm(`Are you sure you want to ${action} "${sale.itemName}"?`)) {
-                salesHistory[index].refunded = !sale.refunded;
-                saveHistory();
-                renderHistory();
-                updateSummary();
+                updateSaleInCloud(saleId, { refunded: setRefunded });
             }
         }
 
@@ -714,14 +837,12 @@
 
             let filtered = salesHistory;
 
-            // Filter by date if selected
             if (dateFilter) {
                 filtered = filtered.filter(sale => {
                     const saleDate = new Date(sale.date).toISOString().slice(0, 10);
                     return saleDate === dateFilter;
                 });
 
-                // Format date for display
                 const displayDate = new Date(dateFilter).toLocaleDateString('en-GB', {
                     weekday: 'long',
                     day: 'numeric',
@@ -734,7 +855,6 @@
                 filterInfo.style.display = 'none';
             }
 
-            // Filter by search term if entered
             if (searchTerm) {
                 filtered = filtered.filter(sale =>
                     sale.itemName.toLowerCase().includes(searchTerm)
@@ -756,12 +876,9 @@
         // ============================================
         function updateSummary(data = null) {
             const sales = data || salesHistory;
-
-            // Separate sold and refunded items
             const soldItems = sales.filter(s => !s.refunded);
             const refundedItems = sales.filter(s => s.refunded);
 
-            // Calculate totals (only count non-refunded items)
             const totalSales = soldItems.length;
             const totalRefunds = refundedItems.length;
             const totalRevenue = soldItems.reduce((sum, s) => sum + s.netProceeds, 0);
@@ -774,7 +891,6 @@
             document.getElementById('totalTax').textContent = '£' + totalTax.toFixed(2);
             document.getElementById('totalProfit').textContent = '£' + totalProfit.toFixed(2);
 
-            // Color the profit
             const profitEl = document.getElementById('totalProfit');
             profitEl.classList.toggle('positive', totalProfit >= 0);
         }
@@ -782,21 +898,16 @@
         // ============================================
         // DELETE / CLEAR
         // ============================================
-        function deleteSale(index) {
+        function deleteSale(saleId) {
             if (confirm('Delete this sale?')) {
-                salesHistory.splice(index, 1);
-                saveHistory();
-                renderHistory();
-                updateSummary();
+                deleteSaleFromCloud(saleId);
             }
         }
 
         function clearAllHistory() {
             if (confirm('Delete ALL sales history? This cannot be undone!')) {
-                salesHistory = [];
-                saveHistory();
-                renderHistory();
-                updateSummary();
+                clearAllFromCloud();
+                localStorage.removeItem('salesHistory');
             }
         }
 
@@ -809,17 +920,14 @@
                 return;
             }
 
-            // CSV header
             let csv = 'Date,Item Name,Platform,Status,Cost of Goods,Net Proceeds,Shipping,Tax,Final Profit\n';
 
-            // CSV rows
             salesHistory.forEach(sale => {
                 const date = new Date(sale.date).toLocaleDateString('en-GB');
                 const status = sale.refunded ? 'Refunded' : 'Sold';
                 csv += `"${date}","${sale.itemName}","${sale.platform}","${status}",${sale.cost.toFixed(2)},${sale.netProceeds.toFixed(2)},${sale.shipping.toFixed(2)},${sale.tax.toFixed(2)},${sale.finalProfit.toFixed(2)}\n`;
             });
 
-            // Download file
             const blob = new Blob([csv], { type: 'text/csv' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
@@ -830,105 +938,9 @@
         }
 
         // ============================================
-        // BACKUP & RESTORE (JSON)
-        // ============================================
-        function exportJSON() {
-            if (salesHistory.length === 0) {
-                alert('No sales to backup!');
-                return;
-            }
-
-            // Create backup object with metadata
-            const backup = {
-                version: 1,
-                exportDate: new Date().toISOString(),
-                salesCount: salesHistory.length,
-                data: salesHistory
-            };
-
-            // Download as JSON file
-            const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'profit_tracker_backup_' + new Date().toISOString().slice(0,10) + '.json';
-            a.click();
-            URL.revokeObjectURL(url);
-
-            alert('Backup saved! Store this file in iCloud Drive to access from other devices.');
-        }
-
-        function importJSON(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                try {
-                    const backup = JSON.parse(e.target.result);
-
-                    // Validate backup file
-                    if (!backup.data || !Array.isArray(backup.data)) {
-                        alert('Invalid backup file!');
-                        return;
-                    }
-
-                    // Ask user how to handle existing data
-                    const existingCount = salesHistory.length;
-                    const importCount = backup.data.length;
-
-                    let action;
-                    if (existingCount > 0) {
-                        action = confirm(
-                            `You have ${existingCount} existing sales.\n` +
-                            `Backup contains ${importCount} sales.\n\n` +
-                            `OK = Replace all data with backup\n` +
-                            `Cancel = Merge (add backup to existing)`
-                        );
-
-                        if (action) {
-                            // Replace
-                            salesHistory = backup.data;
-                        } else {
-                            // Merge - add imported items that don't exist
-                            backup.data.forEach(importedSale => {
-                                const exists = salesHistory.some(s =>
-                                    s.date === importedSale.date &&
-                                    s.itemName === importedSale.itemName &&
-                                    s.netProceeds === importedSale.netProceeds
-                                );
-                                if (!exists) {
-                                    salesHistory.push(importedSale);
-                                }
-                            });
-                            // Sort by date (newest first)
-                            salesHistory.sort((a, b) => new Date(b.date) - new Date(a.date));
-                        }
-                    } else {
-                        salesHistory = backup.data;
-                    }
-
-                    saveHistory();
-                    renderHistory();
-                    updateSummary();
-
-                    alert(`Restored ${backup.data.length} sales from backup!`);
-
-                } catch (error) {
-                    alert('Error reading backup file: ' + error.message);
-                }
-            };
-            reader.readAsText(file);
-
-            // Reset file input so same file can be selected again
-            event.target.value = '';
-        }
-
-        // ============================================
         // INITIALIZE
         // ============================================
-        // Load history when page loads
-        loadHistory();
+        initializeApp();
     </script>
 </body>
 </html>
