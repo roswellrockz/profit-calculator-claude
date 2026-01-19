@@ -440,6 +440,9 @@
         <!-- eBay Form -->
         <div id="ebayTab" class="tab-content active">
             <form onsubmit="calculateEbay(); return false;">
+                <label for="ebayDate">Sale Date:</label>
+                <input type="date" id="ebayDate" required>
+
                 <label for="ebayItemName">Item Name:</label>
                 <input type="text" id="ebayItemName" placeholder="e.g. PS3 Ratatouille" required>
 
@@ -461,6 +464,9 @@
         <!-- Vinted Form -->
         <div id="vintedTab" class="tab-content">
             <form onsubmit="calculateVinted(); return false;">
+                <label for="vintedDate">Sale Date:</label>
+                <input type="date" id="vintedDate" required>
+
                 <label for="vintedItemName">Item Name:</label>
                 <input type="text" id="vintedItemName" placeholder="e.g. Nike Trainers" required>
 
@@ -675,6 +681,11 @@
 
         // Initialize app
         function initializeApp() {
+            // Set default dates to today
+            const today = new Date().toISOString().slice(0, 10);
+            document.getElementById('ebayDate').value = today;
+            document.getElementById('vintedDate').value = today;
+
             // Check if we have a saved sync code
             const savedCode = localStorage.getItem('syncCode');
 
@@ -799,6 +810,7 @@
         // EBAY CALCULATOR
         // ============================================
         function calculateEbay() {
+            const saleDate = document.getElementById('ebayDate').value;
             const itemName = document.getElementById('ebayItemName').value.trim();
             const netProceeds = parseFloat(document.getElementById('ebayNetProceeds').value) || 0;
             const cost = parseFloat(document.getElementById('ebayCost').value) || 0;
@@ -807,6 +819,9 @@
             const preTaxProfit = netProceeds - cost - shipping;
             const tax = preTaxProfit > 0 ? preTaxProfit * 0.20 : 0;
             const finalProfit = preTaxProfit - tax;
+
+            // Use selected date (set to noon to avoid timezone issues)
+            const selectedDate = new Date(saleDate + 'T12:00:00');
 
             currentEbayCalc = {
                 itemName,
@@ -817,7 +832,7 @@
                 tax,
                 finalProfit,
                 platform: 'ebay',
-                date: new Date().toISOString(),
+                date: selectedDate.toISOString(),
                 refunded: false
             };
 
@@ -837,6 +852,9 @@
             if (currentEbayCalc) {
                 saveSaleToCloud(currentEbayCalc);
 
+                // Reset form and set date back to today
+                const today = new Date().toISOString().slice(0, 10);
+                document.getElementById('ebayDate').value = today;
                 document.getElementById('ebayItemName').value = '';
                 document.getElementById('ebayNetProceeds').value = '';
                 document.getElementById('ebayCost').value = '';
@@ -852,6 +870,7 @@
         // VINTED CALCULATOR
         // ============================================
         function calculateVinted() {
+            const saleDate = document.getElementById('vintedDate').value;
             const itemName = document.getElementById('vintedItemName').value.trim();
             const salePrice = parseFloat(document.getElementById('vintedSalePrice').value) || 0;
             const cost = parseFloat(document.getElementById('vintedCost').value) || 0;
@@ -859,6 +878,9 @@
             const preTaxProfit = salePrice - cost;
             const tax = preTaxProfit > 0 ? preTaxProfit * 0.20 : 0;
             const finalProfit = preTaxProfit - tax;
+
+            // Use selected date (set to noon to avoid timezone issues)
+            const selectedDate = new Date(saleDate + 'T12:00:00');
 
             currentVintedCalc = {
                 itemName,
@@ -869,7 +891,7 @@
                 tax,
                 finalProfit,
                 platform: 'vinted',
-                date: new Date().toISOString(),
+                date: selectedDate.toISOString(),
                 refunded: false
             };
 
@@ -889,6 +911,9 @@
             if (currentVintedCalc) {
                 saveSaleToCloud(currentVintedCalc);
 
+                // Reset form and set date back to today
+                const today = new Date().toISOString().slice(0, 10);
+                document.getElementById('vintedDate').value = today;
                 document.getElementById('vintedItemName').value = '';
                 document.getElementById('vintedSalePrice').value = '';
                 document.getElementById('vintedCost').value = '';
