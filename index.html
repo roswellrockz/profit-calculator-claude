@@ -223,18 +223,16 @@
 
 <script>
 // ============================================================
-// JSONBIN CONFIG
+// JSONBIN CONFIG — bin ID hardcoded for cross-device sync
 // ============================================================
 const MASTER_KEY  = '$2a$10$BeMBR5JmB30csHg0sdWy1eqbmNywGIK9Ccr7XX.3UFelOqDPgJ8XS';
-const BIN_NAME    = 'profit-calculator-sales';
+const BIN_ID      = '6997268143b1c97be98bca53';
 const JSONBIN_URL = 'https://api.jsonbin.io/v3/b';
-const BIN_ID_KEY  = 'jsonbin_bin_id';
 
 // ============================================================
 // STATE
 // ============================================================
 let salesHistory = [];
-let binId = localStorage.getItem(BIN_ID_KEY) || null;
 let saveTimer = null;
 let currentEbayCalc = null;
 let currentVintedCalc = null;
@@ -252,7 +250,7 @@ function setSyncStatus(state, msg) {
 // JSONBIN API
 // ============================================================
 async function getBin() {
-    const res = await fetch(`${JSONBIN_URL}/${binId}/latest`, {
+    const res = await fetch(`${JSONBIN_URL}/${BIN_ID}/latest`, {
         headers: { 'X-Master-Key': MASTER_KEY }
     });
     if (!res.ok) throw new Error('Fetch failed: ' + res.status);
@@ -260,24 +258,8 @@ async function getBin() {
     return data.record;
 }
 
-async function createBin(record) {
-    const res = await fetch(JSONBIN_URL, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-Master-Key': MASTER_KEY,
-            'X-Bin-Name': BIN_NAME,
-            'X-Bin-Private': 'true'
-        },
-        body: JSON.stringify(record)
-    });
-    if (!res.ok) throw new Error('Create failed: ' + res.status);
-    const data = await res.json();
-    return data.metadata.id;
-}
-
 async function updateBin(record) {
-    const res = await fetch(`${JSONBIN_URL}/${binId}`, {
+    const res = await fetch(`${JSONBIN_URL}/${BIN_ID}`, {
         method: 'PUT',
         headers: {
             'Content-Type': 'application/json',
@@ -294,27 +276,20 @@ async function updateBin(record) {
 async function loadData() {
     setSyncStatus('syncing', 'Loading your data...');
 
-    // Show local data instantly while cloud loads
+    // Show local cache instantly while cloud loads
     const local = localStorage.getItem('sales_local');
     if (local) {
         try { salesHistory = JSON.parse(local); renderHistory(); updateSummary(); } catch(e) {}
     }
 
     try {
-        if (!binId) {
-            setSyncStatus('syncing', 'Setting up cloud storage...');
-            binId = await createBin({ sales: [] });
-            localStorage.setItem(BIN_ID_KEY, binId);
-            salesHistory = [];
-        } else {
-            const record = await getBin();
-            salesHistory = Array.isArray(record.sales) ? record.sales : [];
-            localStorage.setItem('sales_local', JSON.stringify(salesHistory));
-        }
+        const record = await getBin();
+        salesHistory = Array.isArray(record.sales) ? record.sales : [];
+        localStorage.setItem('sales_local', JSON.stringify(salesHistory));
         setSyncStatus('synced', 'Synced — data available on all your devices');
     } catch (e) {
         console.error('Load error:', e);
-        setSyncStatus('offline', 'Offline — using locally saved data');
+        setSyncStatus('offline', 'Offline — showing locally cached data');
     }
 
     renderHistory();
@@ -322,7 +297,7 @@ async function loadData() {
 }
 
 // ============================================================
-// SAVE (debounced)
+// SAVE (debounced 800ms)
 // ============================================================
 function scheduleSave() {
     clearTimeout(saveTimer);
@@ -330,12 +305,7 @@ function scheduleSave() {
     localStorage.setItem('sales_local', JSON.stringify(salesHistory));
     saveTimer = setTimeout(async () => {
         try {
-            if (!binId) {
-                binId = await createBin({ sales: salesHistory });
-                localStorage.setItem(BIN_ID_KEY, binId);
-            } else {
-                await updateBin({ sales: salesHistory });
-            }
+            await updateBin({ sales: salesHistory });
             setSyncStatus('synced', 'Saved & synced across all your devices');
         } catch (e) {
             console.error('Save error:', e);
