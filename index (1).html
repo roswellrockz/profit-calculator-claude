@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Profit Calculator & Tracker</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #f5f4f0;
+            --card: #ffffff;
+            --border: #e8e6e0;
+            --text: #1a1916;
+            --muted: #8a8880;
+            --accent: #2a5cff;
+            --accent-light: #eef1ff;
+            --green: #1a7a4a;
+            --green-light: #e8f5ee;
+            --red: #c0392b;
+            --red-light: #fdf0ee;
+            --orange: #e07b39;
+            --orange-light: #fdf3ec;
+            --shadow: 0 2px 8px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            padding: 24px 16px 48px;
+        }
+        .page-header { text-align: center; margin-bottom: 28px; }
+        .page-header h1 { font-size: 26px; font-weight: 600; letter-spacing: -0.5px; }
+        .page-header p { color: var(--muted); font-size: 14px; margin-top: 4px; }
+
+        .sync-banner {
+            max-width: 520px;
+            margin: 0 auto 20px;
+            padding: 10px 16px;
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 500;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        .sync-banner.synced { background: var(--green-light); color: var(--green); }
+        .sync-banner.syncing { background: var(--orange-light); color: var(--orange); }
+        .sync-banner.offline { background: var(--red-light); color: var(--red); }
+        .dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+        .synced .dot { background: var(--green); }
+        .syncing .dot { background: var(--orange); animation: pulse 1s infinite; }
+        .offline .dot { background: var(--red); }
+        @keyframes pulse { 0%,100%{opacity:1}50%{opacity:0.3} }
+
+        .card { background: var(--card); border-radius: 16px; box-shadow: var(--shadow); padding: 24px; max-width: 520px; margin: 0 auto 20px; }
+        .card.wide { max-width: 900px; }
+        .card-title { font-size: 17px; font-weight: 600; margin-bottom: 18px; letter-spacing: -0.3px; }
+
+        .tabs { display: flex; background: var(--bg); border-radius: 10px; padding: 4px; margin-bottom: 20px; gap: 4px; }
+        .tab { flex:1; padding:9px; text-align:center; border-radius:8px; cursor:pointer; font-size:14px; font-weight:500; color:var(--muted); transition:all 0.15s; user-select:none; }
+        .tab.active { background: var(--card); color: var(--text); box-shadow: var(--shadow); }
+
+        .form-group { margin-bottom: 14px; }
+        label { display:block; font-size:13px; font-weight:500; color:var(--muted); margin-bottom:5px; text-transform:uppercase; letter-spacing:0.4px; }
+        input[type="number"], input[type="text"], input[type="date"] {
+            width:100%; padding:11px 13px; font-size:15px; font-family:'DM Sans',sans-serif;
+            border:1.5px solid var(--border); border-radius:10px; background:var(--bg); color:var(--text); transition:border-color 0.15s;
+        }
+        input:focus { outline:none; border-color:var(--accent); background:#fff; }
+
+        .btn { width:100%; padding:13px; border:none; border-radius:10px; font-size:15px; font-family:'DM Sans',sans-serif; font-weight:600; cursor:pointer; transition:all 0.15s; margin-top:14px; }
+        .btn-primary { background:var(--accent); color:#fff; }
+        .btn-primary:hover { background:#1a4de8; }
+        .btn-success { background:var(--green); color:#fff; }
+        .btn-success:hover { background:#145e38; }
+        .btn-muted { background:var(--bg); color:var(--text); border:1.5px solid var(--border); }
+        .btn-muted:hover { background:var(--border); }
+        .btn-sm { width:auto; padding:6px 12px; font-size:12px; margin:0; border-radius:7px; }
+        .btn-danger-sm { background:var(--red-light); color:var(--red); font-weight:600; }
+        .btn-danger-sm:hover { background:#f5d5d2; }
+        .btn-warn-sm { background:var(--orange-light); color:var(--orange); font-weight:600; }
+        .btn-warn-sm:hover { background:#f9e4d4; }
+        .btn-undo-sm { background:#f0f0ee; color:var(--muted); font-weight:600; }
+        .btn-undo-sm:hover { background:var(--border); }
+
+        .result-box { margin-top:16px; padding:16px; border-radius:12px; background:var(--green-light); border:1.5px solid #c0e8d0; display:none; }
+        .result-box.show { display:block; }
+        .result-box.loss { background:var(--red-light); border-color:#f0c0ba; }
+        .result-label { font-size:12px; color:var(--muted); font-weight:500; text-transform:uppercase; letter-spacing:0.4px; }
+        .result-item { display:flex; justify-content:space-between; margin-top:8px; font-size:14px; }
+        .result-item.total { font-size:17px; font-weight:600; margin-top:12px; padding-top:10px; border-top:1px solid rgba(0,0,0,0.08); }
+
+        .summary { display:grid; grid-template-columns:repeat(5,1fr); gap:12px; margin-bottom:20px; }
+        @media(max-width:640px){.summary{grid-template-columns:repeat(3,1fr);}}
+        @media(max-width:400px){.summary{grid-template-columns:repeat(2,1fr);}}
+        .summary-item { background:var(--bg); border-radius:12px; padding:14px 12px; text-align:center; }
+        .s-label { font-size:11px; color:var(--muted); font-weight:500; text-transform:uppercase; letter-spacing:0.4px; }
+        .s-value { font-size:20px; font-weight:600; margin-top:4px; letter-spacing:-0.5px; }
+        .s-value.positive { color:var(--green); }
+        .s-value.negative { color:var(--red); }
+
+        .filter-row { display:flex; gap:10px; margin-bottom:14px; flex-wrap:wrap; }
+        .filter-row input { flex:1; min-width:140px; margin:0; }
+        .filter-row .btn { width:auto; margin:0; padding:11px 16px; font-size:13px; }
+        .filter-info { padding:10px 14px; background:var(--accent-light); color:var(--accent); border-radius:8px; font-size:13px; font-weight:500; margin-bottom:14px; }
+
+        .table-wrapper { border:1.5px solid var(--border); border-radius:12px; overflow:hidden; }
+        .scroll-x { overflow-x:auto; }
+        table { width:100%; border-collapse:collapse; font-size:13px; }
+        th { background:var(--bg); padding:10px 12px; text-align:left; font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:0.5px; color:var(--muted); white-space:nowrap; }
+        td { padding:10px 12px; border-top:1px solid var(--border); vertical-align:middle; white-space:nowrap; }
+        tr:hover td { background:var(--bg); }
+
+        .badge { display:inline-block; padding:3px 8px; border-radius:5px; font-size:11px; font-weight:600; }
+        .badge-ebay { background:#e3f0ff; color:#1a5cd4; }
+        .badge-vinted { background:#fce4f0; color:#b01d6e; }
+        .badge-sold { background:var(--green-light); color:var(--green); }
+        .badge-refunded { background:var(--red-light); color:var(--red); }
+
+        .profit-pos { color:var(--green); font-weight:600; font-family:'DM Mono',monospace; }
+        .profit-neg { color:var(--red); font-weight:600; font-family:'DM Mono',monospace; }
+        .mono { font-family:'DM Mono',monospace; }
+
+        .row-refunded td { opacity:0.5; text-decoration:line-through; }
+        .row-refunded td:last-child { text-decoration:none; opacity:1; }
+        .row-refunded td .badge { text-decoration:none; }
+
+        .no-results { text-align:center; padding:40px 20px; color:var(--muted); font-size:14px; }
+        .action-row { display:flex; gap:10px; margin-top:16px; flex-wrap:wrap; }
+        .action-row .btn { flex:1; min-width:120px; }
+        .actions-cell { display:flex; gap:6px; }
+        .tab-content { display:none; }
+        .tab-content.active { display:block; }
+    </style>
+</head>
+<body>
+
+<div class="page-header">
+    <h1>Profit Calculator</h1>
+    <p>eBay &amp; Vinted tracker</p>
+</div>
+
+<div id="syncBanner" class="sync-banner syncing">
+    <div class="dot"></div>
+    <span id="syncMsg">Connecting...</span>
+</div>
+
+<div class="card">
+    <div class="tabs">
+        <div class="tab active" onclick="switchTab('ebay')">eBay</div>
+        <div class="tab" onclick="switchTab('vinted')">Vinted</div>
+    </div>
+
+    <div id="ebayTab" class="tab-content active">
+        <form onsubmit="calculateEbay(); return false;">
+            <div class="form-group"><label>Sale Date</label><input type="date" id="ebayDate" required></div>
+            <div class="form-group"><label>Item Name</label><input type="text" id="ebayItemName" placeholder="e.g. PS3 Ratatouille" required></div>
+            <div class="form-group"><label>Net Proceeds from eBay (£)</label><input type="number" id="ebayNetProceeds" step="0.01" placeholder="0.00" required></div>
+            <div class="form-group"><label>Cost of Goods (£)</label><input type="number" id="ebayCost" step="0.01" placeholder="0.00" required></div>
+            <div class="form-group"><label>Shipping Cost (£)</label><input type="number" id="ebayShipping" step="0.01" placeholder="0.00" required></div>
+            <button type="submit" class="btn btn-primary">Calculate</button>
+        </form>
+        <div id="ebayResult" class="result-box"></div>
+        <button class="btn btn-success" id="ebayAddBtn" onclick="addEbayToHistory()" style="display:none;">Add to History</button>
+    </div>
+
+    <div id="vintedTab" class="tab-content">
+        <form onsubmit="calculateVinted(); return false;">
+            <div class="form-group"><label>Sale Date</label><input type="date" id="vintedDate" required></div>
+            <div class="form-group"><label>Item Name</label><input type="text" id="vintedItemName" placeholder="e.g. Nike Trainers" required></div>
+            <div class="form-group"><label>Sale Price (£)</label><input type="number" id="vintedSalePrice" step="0.01" placeholder="0.00" required></div>
+            <div class="form-group"><label>Cost of Goods (£)</label><input type="number" id="vintedCost" step="0.01" placeholder="0.00" required></div>
+            <button type="submit" class="btn btn-primary">Calculate</button>
+        </form>
+        <div id="vintedResult" class="result-box"></div>
+        <button class="btn btn-success" id="vintedAddBtn" onclick="addVintedToHistory()" style="display:none;">Add to History</button>
+    </div>
+</div>
+
+<div class="card wide">
+    <div class="card-title">Sales History</div>
+
+    <div class="filter-row">
+        <input type="date" id="dateFilter" onchange="filterHistory()">
+        <button class="btn btn-muted btn-sm" style="padding:11px 16px;font-size:13px;" onclick="clearDateFilter()">All Dates</button>
+    </div>
+    <div class="filter-row">
+        <input type="text" id="searchInput" placeholder="Search by item name..." oninput="filterHistory()">
+    </div>
+
+    <div id="filterInfo" class="filter-info" style="display:none;"></div>
+
+    <div class="summary">
+        <div class="summary-item"><div class="s-label">Sales</div><div class="s-value" id="totalSales">0</div></div>
+        <div class="summary-item"><div class="s-label">Refunds</div><div class="s-value negative" id="totalRefunds">0</div></div>
+        <div class="summary-item"><div class="s-label">Revenue</div><div class="s-value" id="totalRevenue">£0.00</div></div>
+        <div class="summary-item"><div class="s-label">Tax</div><div class="s-value" id="totalTax">£0.00</div></div>
+        <div class="summary-item"><div class="s-label">Net Profit</div><div class="s-value positive" id="totalProfit">£0.00</div></div>
+    </div>
+
+    <div class="table-wrapper scroll-x">
+        <table>
+            <thead>
+                <tr>
+                    <th>Date</th><th>Item</th><th>Platform</th><th>Status</th>
+                    <th>COG</th><th>Payout</th><th>Ship</th><th>Tax</th><th>Profit</th><th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="historyBody"></tbody>
+        </table>
+        <div class="no-results" id="noResults">No sales yet. Add your first sale above!</div>
+    </div>
+
+    <div class="action-row">
+        <button class="btn btn-muted" onclick="exportCSV()">Export CSV</button>
+        <button class="btn btn-danger-sm" style="padding:13px;font-size:14px;flex:1;border-radius:10px;margin-top:0;" onclick="clearAllHistory()">Clear All</button>
+    </div>
+</div>
+
+<script>
+// ============================================================
+// JSONBIN CONFIG
+// ============================================================
+const MASTER_KEY  = '$2a$10$BeMBR5JmB30csHg0sdWy1eqbmNywGIK9Ccr7XX.3UFelOqDPgJ8XS';
+const BIN_NAME    = 'profit-calculator-sales';
+const JSONBIN_URL = 'https://api.jsonbin.io/v3/b';
+const BIN_ID_KEY  = 'jsonbin_bin_id';
+
+// ============================================================
+// STATE
+// ============================================================
+let salesHistory = [];
+let binId = localStorage.getItem(BIN_ID_KEY) || null;
+let saveTimer = null;
+let currentEbayCalc = null;
+let currentVintedCalc = null;
+
+// ============================================================
+// SYNC STATUS
+// ============================================================
+function setSyncStatus(state, msg) {
+    const banner = document.getElementById('syncBanner');
+    banner.className = 'sync-banner ' + state;
+    document.getElementById('syncMsg').textContent = msg;
+}
+
+// ============================================================
+// JSONBIN API
+// ============================================================
+async function getBin() {
+    const res = await fetch(`${JSONBIN_URL}/${binId}/latest`, {
+        headers: { 'X-Master-Key': MASTER_KEY }
+    });
+    if (!res.ok) throw new Error('Fetch failed: ' + res.status);
+    const data = await res.json();
+    return data.record;
+}
+
+async function createBin(record) {
+    const res = await fetch(JSONBIN_URL, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-Master-Key': MASTER_KEY,
+            'X-Bin-Name': BIN_NAME,
+            'X-Bin-Private': 'true'
+        },
+        body: JSON.stringify(record)
+    });
+    if (!res.ok) throw new Error('Create failed: ' + res.status);
+    const data = await res.json();
+    return data.metadata.id;
+}
+
+async function updateBin(record) {
+    const res = await fetch(`${JSONBIN_URL}/${binId}`, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-Master-Key': MASTER_KEY
+        },
+        body: JSON.stringify(record)
+    });
+    if (!res.ok) throw new Error('Update failed: ' + res.status);
+}
+
+// ============================================================
+// LOAD
+// ============================================================
+async function loadData() {
+    setSyncStatus('syncing', 'Loading your data...');
+
+    // Show local data instantly while cloud loads
+    const local = localStorage.getItem('sales_local');
+    if (local) {
+        try { salesHistory = JSON.parse(local); renderHistory(); updateSummary(); } catch(e) {}
+    }
+
+    try {
+        if (!binId) {
+            setSyncStatus('syncing', 'Setting up cloud storage...');
+            binId = await createBin({ sales: [] });
+            localStorage.setItem(BIN_ID_KEY, binId);
+            salesHistory = [];
+        } else {
+            const record = await getBin();
+            salesHistory = Array.isArray(record.sales) ? record.sales : [];
+            localStorage.setItem('sales_local', JSON.stringify(salesHistory));
+        }
+        setSyncStatus('synced', 'Synced — data available on all your devices');
+    } catch (e) {
+        console.error('Load error:', e);
+        setSyncStatus('offline', 'Offline — using locally saved data');
+    }
+
+    renderHistory();
+    updateSummary();
+}
+
+// ============================================================
+// SAVE (debounced)
+// ============================================================
+function scheduleSave() {
+    clearTimeout(saveTimer);
+    setSyncStatus('syncing', 'Saving...');
+    localStorage.setItem('sales_local', JSON.stringify(salesHistory));
+    saveTimer = setTimeout(async () => {
+        try {
+            if (!binId) {
+                binId = await createBin({ sales: salesHistory });
+                localStorage.setItem(BIN_ID_KEY, binId);
+            } else {
+                await updateBin({ sales: salesHistory });
+            }
+            setSyncStatus('synced', 'Saved & synced across all your devices');
+        } catch (e) {
+            console.error('Save error:', e);
+            setSyncStatus('offline', 'Cloud save failed — saved locally');
+        }
+    }, 800);
+}
+
+// ============================================================
+// TAB SWITCHING
+// ============================================================
+function switchTab(tab) {
+    document.querySelectorAll('.tab').forEach((t, i) => {
+        t.classList.toggle('active', (tab==='ebay'&&i===0)||(tab==='vinted'&&i===1));
+    });
+    document.getElementById('ebayTab').classList.toggle('active', tab==='ebay');
+    document.getElementById('vintedTab').classList.toggle('active', tab==='vinted');
+}
+
+// ============================================================
+// EBAY CALCULATOR
+// ============================================================
+function calculateEbay() {
+    const saleDate    = document.getElementById('ebayDate').value;
+    const itemName    = document.getElementById('ebayItemName').value.trim();
+    const netProceeds = parseFloat(document.getElementById('ebayNetProceeds').value) || 0;
+    const cost        = parseFloat(document.getElementById('ebayCost').value) || 0;
+    const shipping    = parseFloat(document.getElementById('ebayShipping').value) || 0;
+
+    const preTaxProfit = netProceeds - cost - shipping;
+    const tax          = preTaxProfit > 0 ? preTaxProfit * 0.20 : 0;
+    const finalProfit  = preTaxProfit - tax;
+
+    currentEbayCalc = {
+        itemName, netProceeds, cost, shipping,
+        preTaxProfit, tax, finalProfit,
+        platform: 'ebay',
+        date: new Date(saleDate + 'T12:00:00').toISOString(),
+        refunded: false
+    };
+
+    const box = document.getElementById('ebayResult');
+    box.innerHTML = `
+        <div class="result-label">${itemName}</div>
+        <div class="result-item"><span>Pre-tax profit</span><span class="mono">£${preTaxProfit.toFixed(2)}</span></div>
+        <div class="result-item"><span>Tax (20%)</span><span class="mono">£${tax.toFixed(2)}</span></div>
+        <div class="result-item total"><span>Final Profit</span><span>£${finalProfit.toFixed(2)}</span></div>
+    `;
+    box.className = 'result-box show' + (finalProfit < 0 ? ' loss' : '');
+    document.getElementById('ebayAddBtn').style.display = 'block';
+}
+
+function addEbayToHistory() {
+    if (!currentEbayCalc) return;
+    currentEbayCalc.id = Date.now().toString();
+    salesHistory.unshift(currentEbayCalc);
+    scheduleSave(); renderHistory(); updateSummary();
+
+    const today = new Date().toISOString().slice(0,10);
+    document.getElementById('ebayDate').value = today;
+    ['ebayItemName','ebayNetProceeds','ebayCost','ebayShipping'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('ebayResult').className = 'result-box';
+    document.getElementById('ebayAddBtn').style.display = 'none';
+    currentEbayCalc = null;
+    document.getElementById('ebayItemName').focus();
+}
+
+// ============================================================
+// VINTED CALCULATOR
+// ============================================================
+function calculateVinted() {
+    const saleDate  = document.getElementById('vintedDate').value;
+    const itemName  = document.getElementById('vintedItemName').value.trim();
+    const salePrice = parseFloat(document.getElementById('vintedSalePrice').value) || 0;
+    const cost      = parseFloat(document.getElementById('vintedCost').value) || 0;
+
+    const preTaxProfit = salePrice - cost;
+    const tax          = preTaxProfit > 0 ? preTaxProfit * 0.20 : 0;
+    const finalProfit  = preTaxProfit - tax;
+
+    currentVintedCalc = {
+        itemName, netProceeds: salePrice, cost, shipping: 0,
+        preTaxProfit, tax, finalProfit,
+        platform: 'vinted',
+        date: new Date(saleDate + 'T12:00:00').toISOString(),
+        refunded: false
+    };
+
+    const box = document.getElementById('vintedResult');
+    box.innerHTML = `
+        <div class="result-label">${itemName}</div>
+        <div class="result-item"><span>Pre-tax profit</span><span class="mono">£${preTaxProfit.toFixed(2)}</span></div>
+        <div class="result-item"><span>Tax (20%)</span><span class="mono">£${tax.toFixed(2)}</span></div>
+        <div class="result-item total"><span>Final Profit</span><span>£${finalProfit.toFixed(2)}</span></div>
+    `;
+    box.className = 'result-box show' + (finalProfit < 0 ? ' loss' : '');
+    document.getElementById('vintedAddBtn').style.display = 'block';
+}
+
+function addVintedToHistory() {
+    if (!currentVintedCalc) return;
+    currentVintedCalc.id = Date.now().toString();
+    salesHistory.unshift(currentVintedCalc);
+    scheduleSave(); renderHistory(); updateSummary();
+
+    const today = new Date().toISOString().slice(0,10);
+    document.getElementById('vintedDate').value = today;
+    ['vintedItemName','vintedSalePrice','vintedCost'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('vintedResult').className = 'result-box';
+    document.getElementById('vintedAddBtn').style.display = 'none';
+    currentVintedCalc = null;
+    document.getElementById('vintedItemName').focus();
+}
+
+// ============================================================
+// RENDER TABLE
+// ============================================================
+function renderHistory(data) {
+    const rows = data !== undefined ? data : salesHistory;
+    const tbody = document.getElementById('historyBody');
+    const noResults = document.getElementById('noResults');
+
+    if (rows.length === 0) {
+        tbody.innerHTML = '';
+        noResults.style.display = 'block';
+        return;
+    }
+    noResults.style.display = 'none';
+    tbody.innerHTML = rows.map(sale => {
+        const date = new Date(sale.date).toLocaleDateString('en-GB');
+        const isRefunded = sale.refunded === true;
+        const profitClass = sale.finalProfit >= 0 ? 'profit-pos' : 'profit-neg';
+        const actionBtn = isRefunded
+            ? `<button class="btn btn-undo-sm btn-sm" onclick="toggleRefund('${sale.id}',false)">Undo</button>`
+            : `<button class="btn btn-warn-sm btn-sm" onclick="toggleRefund('${sale.id}',true)">Refund</button>`;
+        return `<tr class="${isRefunded?'row-refunded':''}">
+            <td>${date}</td>
+            <td>${sale.itemName}</td>
+            <td><span class="badge badge-${sale.platform}">${sale.platform==='ebay'?'eBay':'Vinted'}</span></td>
+            <td><span class="badge ${isRefunded?'badge-refunded':'badge-sold'}">${isRefunded?'Refunded':'Sold'}</span></td>
+            <td class="mono">£${sale.cost.toFixed(2)}</td>
+            <td class="mono">£${sale.netProceeds.toFixed(2)}</td>
+            <td class="mono">£${sale.shipping.toFixed(2)}</td>
+            <td class="mono">£${sale.tax.toFixed(2)}</td>
+            <td class="${profitClass}">£${sale.finalProfit.toFixed(2)}</td>
+            <td><div class="actions-cell">
+                ${actionBtn}
+                <button class="btn btn-danger-sm btn-sm" onclick="deleteSale('${sale.id}')">✕</button>
+            </div></td>
+        </tr>`;
+    }).join('');
+}
+
+// ============================================================
+// SUMMARY
+// ============================================================
+function updateSummary(data) {
+    const sales = data !== undefined ? data : salesHistory;
+    const sold = sales.filter(s => !s.refunded);
+    const refunded = sales.filter(s => s.refunded);
+    document.getElementById('totalSales').textContent = sold.length;
+    document.getElementById('totalRefunds').textContent = refunded.length;
+    document.getElementById('totalRevenue').textContent = '£' + sold.reduce((s,x)=>s+x.netProceeds,0).toFixed(2);
+    document.getElementById('totalTax').textContent = '£' + sold.reduce((s,x)=>s+x.tax,0).toFixed(2);
+    const profit = sold.reduce((s,x)=>s+x.finalProfit,0);
+    const el = document.getElementById('totalProfit');
+    el.textContent = '£' + profit.toFixed(2);
+    el.className = 's-value ' + (profit >= 0 ? 'positive' : 'negative');
+}
+
+// ============================================================
+// REFUND / DELETE / CLEAR
+// ============================================================
+function toggleRefund(id, setRefunded) {
+    const sale = salesHistory.find(s => s.id === id);
+    if (!sale) return;
+    const label = setRefunded ? 'Mark as refunded' : 'Undo refund for';
+    if (!confirm(`${label} "${sale.itemName}"?`)) return;
+    sale.refunded = setRefunded;
+    scheduleSave(); filterHistory();
+}
+
+function deleteSale(id) {
+    if (!confirm('Delete this sale?')) return;
+    salesHistory = salesHistory.filter(s => s.id !== id);
+    scheduleSave(); filterHistory();
+}
+
+function clearAllHistory() {
+    if (!confirm('Delete ALL sales history? This cannot be undone!')) return;
+    salesHistory = [];
+    scheduleSave(); renderHistory(); updateSummary();
+}
+
+// ============================================================
+// FILTER / SEARCH
+// ============================================================
+function filterHistory() {
+    const search = document.getElementById('searchInput').value.toLowerCase().trim();
+    const date   = document.getElementById('dateFilter').value;
+    const info   = document.getElementById('filterInfo');
+    let filtered = salesHistory;
+
+    if (date) {
+        filtered = filtered.filter(s => new Date(s.date).toISOString().slice(0,10) === date);
+        const display = new Date(date).toLocaleDateString('en-GB', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+        info.innerHTML = `Showing sales for <strong>${display}</strong>`;
+        info.style.display = 'block';
+    } else {
+        info.style.display = 'none';
+    }
+
+    if (search) filtered = filtered.filter(s => s.itemName.toLowerCase().includes(search));
+    renderHistory(filtered); updateSummary(filtered);
+}
+
+function clearDateFilter() {
+    document.getElementById('dateFilter').value = '';
+    document.getElementById('searchInput').value = '';
+    filterHistory();
+}
+
+// ============================================================
+// EXPORT CSV
+// ============================================================
+function exportCSV() {
+    if (!salesHistory.length) { alert('No sales to export!'); return; }
+    let csv = 'Date,Item Name,Platform,Status,Cost of Goods,Net Proceeds,Shipping,Tax,Final Profit\n';
+    salesHistory.forEach(s => {
+        const date = new Date(s.date).toLocaleDateString('en-GB');
+        csv += `"${date}","${s.itemName}","${s.platform}","${s.refunded?'Refunded':'Sold'}",${s.cost.toFixed(2)},${s.netProceeds.toFixed(2)},${s.shipping.toFixed(2)},${s.tax.toFixed(2)},${s.finalProfit.toFixed(2)}\n`;
+    });
+    const blob = new Blob([csv], { type:'text/csv' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href = url; a.download = 'sales_history_' + new Date().toISOString().slice(0,10) + '.csv';
+    a.click(); URL.revokeObjectURL(url);
+}
+
+// ============================================================
+// INIT
+// ============================================================
+(function init() {
+    const today = new Date().toISOString().slice(0,10);
+    document.getElementById('ebayDate').value = today;
+    document.getElementById('vintedDate').value = today;
+    loadData();
+})();
+</script>
+</body>
+</html>
