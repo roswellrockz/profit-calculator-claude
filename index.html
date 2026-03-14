@@ -57,7 +57,7 @@
         @keyframes pulse { 0%,100%{opacity:1}50%{opacity:0.3} }
 
         .card { background: var(--card); border-radius: 16px; box-shadow: var(--shadow); padding: 24px; max-width: 520px; margin: 0 auto 20px; }
-        .card.wide { max-width: 900px; }
+        .card.wide { max-width: 1200px; }
         .card-title { font-size: 17px; font-weight: 600; margin-bottom: 18px; letter-spacing: -0.3px; }
 
         .tabs { display: flex; background: var(--bg); border-radius: 10px; padding: 4px; margin-bottom: 20px; gap: 4px; }
@@ -110,9 +110,20 @@
 
         .table-wrapper { border:1.5px solid var(--border); border-radius:12px; overflow:hidden; }
         .scroll-x { overflow-x:auto; }
-        table { width:100%; border-collapse:collapse; font-size:13px; }
-        th { background:var(--bg); padding:10px 12px; text-align:left; font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:0.5px; color:var(--muted); white-space:nowrap; }
-        td { padding:10px 12px; border-top:1px solid var(--border); vertical-align:middle; white-space:nowrap; }
+        table { width:100%; border-collapse:collapse; font-size:13px; table-layout:fixed; }
+        th { background:var(--bg); padding:10px 10px; text-align:left; font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:0.5px; color:var(--muted); white-space:nowrap; }
+        td { padding:10px 10px; border-top:1px solid var(--border); vertical-align:middle; white-space:nowrap; }
+        td.item-cell { white-space:normal; word-break:break-word; }
+        th:nth-child(1), td:nth-child(1) { width:90px; }
+        th:nth-child(2), td:nth-child(2) { width:auto; min-width:120px; }
+        th:nth-child(3), td:nth-child(3) { width:70px; }
+        th:nth-child(4), td:nth-child(4) { width:80px; }
+        th:nth-child(5), td:nth-child(5) { width:75px; }
+        th:nth-child(6), td:nth-child(6) { width:80px; }
+        th:nth-child(7), td:nth-child(7) { width:65px; }
+        th:nth-child(8), td:nth-child(8) { width:65px; }
+        th:nth-child(9), td:nth-child(9) { width:75px; }
+        th:nth-child(10), td:nth-child(10) { width:110px; }
         tr:hover td { background:var(--bg); }
 
         .badge { display:inline-block; padding:3px 8px; border-radius:5px; font-size:11px; font-weight:600; }
@@ -135,6 +146,16 @@
         .actions-cell { display:flex; gap:6px; }
         .tab-content { display:none; }
         .tab-content.active { display:block; }
+
+        .view-toggle { display:flex; background:var(--bg); border-radius:10px; padding:4px; margin-bottom:18px; gap:4px; width:fit-content; }
+        .view-btn { padding:8px 18px; border-radius:7px; cursor:pointer; font-size:13px; font-weight:500; color:var(--muted); transition:all 0.15s; user-select:none; white-space:nowrap; }
+        .view-btn.active { background:var(--card); color:var(--text); box-shadow:var(--shadow); }
+
+        .monthly-table table { table-layout:auto; }
+        .monthly-table th, .monthly-table td { white-space:nowrap; width:auto; }
+        .month-row { cursor:pointer; }
+        .month-row:hover td { background:var(--accent-light) !important; }
+        .month-name { font-weight:600; color:var(--text); }
     </style>
 </head>
 <body>
@@ -184,40 +205,70 @@
 <div class="card wide">
     <div class="card-title">Sales History</div>
 
-    <div class="filter-row">
-        <input type="date" id="dateFilter" onchange="filterHistory()">
-        <button class="btn btn-muted btn-sm" style="padding:11px 16px;font-size:13px;" onclick="clearDateFilter()">All Dates</button>
-    </div>
-    <div class="filter-row">
-        <input type="text" id="searchInput" placeholder="Search by item name..." oninput="filterHistory()">
+    <div class="view-toggle">
+        <div class="view-btn active" onclick="switchView('all')">All Sales</div>
+        <div class="view-btn" onclick="switchView('monthly')">Monthly</div>
     </div>
 
-    <div id="filterInfo" class="filter-info" style="display:none;"></div>
+    <!-- ALL SALES VIEW -->
+    <div id="allSalesView">
+        <div class="filter-row">
+            <input type="date" id="dateFilter" onchange="filterHistory()">
+            <button class="btn btn-muted btn-sm" style="padding:11px 16px;font-size:13px;" onclick="clearDateFilter()">All Dates</button>
+        </div>
+        <div class="filter-row">
+            <input type="text" id="searchInput" placeholder="Search by item name..." oninput="filterHistory()">
+        </div>
 
-    <div class="summary">
-        <div class="summary-item"><div class="s-label">Sales</div><div class="s-value" id="totalSales">0</div></div>
-        <div class="summary-item"><div class="s-label">Refunds</div><div class="s-value negative" id="totalRefunds">0</div></div>
-        <div class="summary-item"><div class="s-label">Revenue</div><div class="s-value" id="totalRevenue">£0.00</div></div>
-        <div class="summary-item"><div class="s-label">Tax</div><div class="s-value" id="totalTax">£0.00</div></div>
-        <div class="summary-item"><div class="s-label">Net Profit</div><div class="s-value positive" id="totalProfit">£0.00</div></div>
+        <div id="filterInfo" class="filter-info" style="display:none;"></div>
+
+        <div class="summary">
+            <div class="summary-item"><div class="s-label">Sales</div><div class="s-value" id="totalSales">0</div></div>
+            <div class="summary-item"><div class="s-label">Refunds</div><div class="s-value negative" id="totalRefunds">0</div></div>
+            <div class="summary-item"><div class="s-label">Revenue</div><div class="s-value" id="totalRevenue">£0.00</div></div>
+            <div class="summary-item"><div class="s-label">Tax</div><div class="s-value" id="totalTax">£0.00</div></div>
+            <div class="summary-item"><div class="s-label">Net Profit</div><div class="s-value positive" id="totalProfit">£0.00</div></div>
+        </div>
+
+        <div class="table-wrapper scroll-x">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Date</th><th>Item</th><th>Platform</th><th>Status</th>
+                        <th>COG</th><th>Payout</th><th>Ship</th><th>Tax</th><th>Profit</th><th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="historyBody"></tbody>
+            </table>
+            <div class="no-results" id="noResults">No sales yet. Add your first sale above!</div>
+        </div>
+
+        <div class="action-row">
+            <button class="btn btn-muted" onclick="exportCSV()">Export CSV</button>
+            <button class="btn btn-danger-sm" style="padding:13px;font-size:14px;flex:1;border-radius:10px;margin-top:0;" onclick="clearAllHistory()">Clear All</button>
+        </div>
     </div>
 
-    <div class="table-wrapper scroll-x">
-        <table>
-            <thead>
-                <tr>
-                    <th>Date</th><th>Item</th><th>Platform</th><th>Status</th>
-                    <th>COG</th><th>Payout</th><th>Ship</th><th>Tax</th><th>Profit</th><th>Actions</th>
-                </tr>
-            </thead>
-            <tbody id="historyBody"></tbody>
-        </table>
-        <div class="no-results" id="noResults">No sales yet. Add your first sale above!</div>
-    </div>
-
-    <div class="action-row">
-        <button class="btn btn-muted" onclick="exportCSV()">Export CSV</button>
-        <button class="btn btn-danger-sm" style="padding:13px;font-size:14px;flex:1;border-radius:10px;margin-top:0;" onclick="clearAllHistory()">Clear All</button>
+    <!-- MONTHLY VIEW -->
+    <div id="monthlyView" style="display:none;">
+        <div class="summary" style="margin-bottom:20px;">
+            <div class="summary-item"><div class="s-label">Sales</div><div class="s-value" id="mTotalSales">0</div></div>
+            <div class="summary-item"><div class="s-label">Refunds</div><div class="s-value negative" id="mTotalRefunds">0</div></div>
+            <div class="summary-item"><div class="s-label">Revenue</div><div class="s-value" id="mTotalRevenue">£0.00</div></div>
+            <div class="summary-item"><div class="s-label">Tax</div><div class="s-value" id="mTotalTax">£0.00</div></div>
+            <div class="summary-item"><div class="s-label">Net Profit</div><div class="s-value positive" id="mTotalProfit">£0.00</div></div>
+        </div>
+        <div class="table-wrapper monthly-table">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Month</th><th>Sales</th><th>Refunds</th><th>eBay</th><th>Vinted</th><th>Revenue</th><th>Tax</th><th>Net Profit</th>
+                    </tr>
+                </thead>
+                <tbody id="monthlyBody"></tbody>
+            </table>
+            <div class="no-results" id="noMonthly" style="display:none;">No sales yet.</div>
+        </div>
     </div>
 </div>
 
@@ -443,7 +494,7 @@ function renderHistory(data) {
             : `<button class="btn btn-warn-sm btn-sm" onclick="toggleRefund('${sale.id}',true)">Refund</button>`;
         return `<tr class="${isRefunded?'row-refunded':''}">
             <td>${date}</td>
-            <td>${sale.itemName}</td>
+            <td class="item-cell">${sale.itemName}</td>
             <td><span class="badge badge-${sale.platform}">${sale.platform==='ebay'?'eBay':'Vinted'}</span></td>
             <td><span class="badge ${isRefunded?'badge-refunded':'badge-sold'}">${isRefunded?'Refunded':'Sold'}</span></td>
             <td class="mono">£${sale.cost.toFixed(2)}</td>
@@ -543,6 +594,105 @@ function exportCSV() {
     const a    = document.createElement('a');
     a.href = url; a.download = 'sales_history_' + new Date().toISOString().slice(0,10) + '.csv';
     a.click(); URL.revokeObjectURL(url);
+}
+
+// ============================================================
+// VIEW SWITCHING (All Sales / Monthly)
+// ============================================================
+let currentView = 'all';
+
+function switchView(view) {
+    currentView = view;
+    document.querySelectorAll('.view-btn').forEach((btn, i) => {
+        btn.classList.toggle('active', (view==='all'&&i===0)||(view==='monthly'&&i===1));
+    });
+    document.getElementById('allSalesView').style.display = view === 'all' ? 'block' : 'none';
+    document.getElementById('monthlyView').style.display  = view === 'monthly' ? 'block' : 'none';
+    if (view === 'monthly') renderMonthly();
+}
+
+function renderMonthly() {
+    const tbody = document.getElementById('monthlyBody');
+    const noMonthly = document.getElementById('noMonthly');
+
+    if (!salesHistory.length) {
+        tbody.innerHTML = '';
+        noMonthly.style.display = 'block';
+        updateMonthlyTotals([]);
+        return;
+    }
+    noMonthly.style.display = 'none';
+
+    // Group by YYYY-MM
+    const groups = {};
+    salesHistory.forEach(s => {
+        const key = s.date.slice(0, 7); // "2026-03"
+        if (!groups[key]) groups[key] = [];
+        groups[key].push(s);
+    });
+
+    // Sort newest first
+    const sortedKeys = Object.keys(groups).sort((a, b) => b.localeCompare(a));
+
+    tbody.innerHTML = sortedKeys.map(key => {
+        const sales   = groups[key];
+        const sold    = sales.filter(s => !s.refunded);
+        const refunded = sales.filter(s => s.refunded);
+        const revenue  = sold.reduce((s, x) => s + x.netProceeds, 0);
+        const tax      = sold.reduce((s, x) => s + x.tax, 0);
+        const profit   = sold.reduce((s, x) => s + x.finalProfit, 0);
+        const ebayCount   = sold.filter(s => s.platform === 'ebay').length;
+        const vintedCount = sold.filter(s => s.platform === 'vinted').length;
+        const profitClass = profit >= 0 ? 'profit-pos' : 'profit-neg';
+
+        const [year, month] = key.split('-');
+        const monthName = new Date(parseInt(year), parseInt(month) - 1, 1)
+            .toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
+
+        return `<tr class="month-row" onclick="goToMonth('${key}')" title="Click to view ${monthName} sales">
+            <td class="month-name">${monthName}</td>
+            <td>${sold.length}</td>
+            <td>${refunded.length > 0 ? `<span style="color:var(--red)">${refunded.length}</span>` : '0'}</td>
+            <td>${ebayCount > 0 ? ebayCount : '<span style="color:var(--muted)">—</span>'}</td>
+            <td>${vintedCount > 0 ? vintedCount : '<span style="color:var(--muted)">—</span>'}</td>
+            <td class="mono">£${revenue.toFixed(2)}</td>
+            <td class="mono">£${tax.toFixed(2)}</td>
+            <td class="${profitClass}">£${profit.toFixed(2)}</td>
+        </tr>`;
+    }).join('');
+
+    updateMonthlyTotals(salesHistory);
+}
+
+function updateMonthlyTotals(sales) {
+    const sold = sales.filter(s => !s.refunded);
+    const refunded = sales.filter(s => s.refunded);
+    document.getElementById('mTotalSales').textContent = sold.length;
+    document.getElementById('mTotalRefunds').textContent = refunded.length;
+    document.getElementById('mTotalRevenue').textContent = '£' + sold.reduce((s,x)=>s+x.netProceeds,0).toFixed(2);
+    document.getElementById('mTotalTax').textContent = '£' + sold.reduce((s,x)=>s+x.tax,0).toFixed(2);
+    const profit = sold.reduce((s,x)=>s+x.finalProfit,0);
+    const el = document.getElementById('mTotalProfit');
+    el.textContent = '£' + profit.toFixed(2);
+    el.className = 's-value ' + (profit >= 0 ? 'positive' : 'negative');
+}
+
+function goToMonth(key) {
+    // Switch to all sales view and filter to first day of that month range
+    switchView('all');
+    // Filter by month: update filterHistory to support month range
+    const [year, month] = key.split('-');
+    const monthName = new Date(parseInt(year), parseInt(month) - 1, 1)
+        .toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
+
+    const filtered = salesHistory.filter(s => s.date.slice(0,7) === key);
+    document.getElementById('dateFilter').value = '';
+    document.getElementById('searchInput').value = '';
+    const info = document.getElementById('filterInfo');
+    info.innerHTML = `Showing sales for <strong>${monthName}</strong> — <a href="#" onclick="clearDateFilter();return false;" style="color:var(--accent)">Clear</a>`;
+    info.style.display = 'block';
+    renderHistory(filtered);
+    updateSummary(filtered);
 }
 
 // ============================================================
