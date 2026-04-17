@@ -989,6 +989,7 @@
         search: '',
         editingId: null,
         editPlatform: 'ebay',
+        monthKey: null,
       },
     };
 
@@ -1161,8 +1162,10 @@
       const r = range ?? state.ui.range;
       const p = platform ?? state.ui.platformFilter;
       const q = (search ?? state.ui.search).trim().toLowerCase();
+      const mk = state.ui.monthKey;
       return state.sales.filter((s) => {
-        if (!inRange(s.date, r)) return false;
+        if (mk && s.date.slice(0, 7) !== mk) return false;
+        if (!mk && !inRange(s.date, r)) return false;
         if (p !== 'all' && s.platform !== p) return false;
         if (q && !s.name.toLowerCase().includes(q)) return false;
         return true;
@@ -1429,13 +1432,10 @@
 
     function goToMonth(key) {
       state.ui.view = 'all';
+      state.ui.monthKey = key;
       $$('[data-view]').forEach((t) =>
         t.setAttribute('aria-selected', String(t.dataset.view === 'all'))
       );
-      const [year, month] = key.split('-');
-      const monthName = new Date(Number(year), Number(month) - 1, 1)
-        .toLocaleString('en-GB', { month: 'long', year: 'numeric' });
-      const filtered = state.sales.filter(s => s.date.slice(0, 7) === key);
       state.ui.range = 'all';
       state.ui.platformFilter = 'all';
       state.ui.search = '';
@@ -1626,7 +1626,9 @@
 
       // Filters
       $('#filter-range').addEventListener('change', (e) => {
-        state.ui.range = e.target.value; renderHistory();
+        state.ui.range = e.target.value;
+        state.ui.monthKey = null;
+        renderHistory();
       });
       $('#filter-platform').addEventListener('change', (e) => {
         state.ui.platformFilter = e.target.value; renderHistory();
