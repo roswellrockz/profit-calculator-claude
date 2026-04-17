@@ -1340,7 +1340,7 @@
         const monthLabel = new Date(Number(y), Number(m) - 1, 1)
           .toLocaleString('en-GB', { month: 'long', year: 'numeric' });
         return `
-          <tr>
+          <tr style="cursor: pointer;" onclick="goToMonth('${key}')" title="Click to view ${monthLabel} sales">
             <td><strong>${esc(monthLabel)}</strong></td>
             <td class="num">${agg.sales}</td>
             <td class="num">${agg.refunds}</td>
@@ -1425,6 +1425,24 @@
       renderAll();
       scheduleSync();
       toast('History cleared', 'success');
+    }
+
+    function goToMonth(key) {
+      state.ui.view = 'all';
+      $$('[data-view]').forEach((t) =>
+        t.setAttribute('aria-selected', String(t.dataset.view === 'all'))
+      );
+      const [year, month] = key.split('-');
+      const monthName = new Date(Number(year), Number(month) - 1, 1)
+        .toLocaleString('en-GB', { month: 'long', year: 'numeric' });
+      const filtered = state.sales.filter(s => s.date.slice(0, 7) === key);
+      state.ui.range = 'all';
+      state.ui.platformFilter = 'all';
+      state.ui.search = '';
+      $('#filter-range').value = 'all';
+      $('#filter-platform').value = 'all';
+      $('#filter-search').value = '';
+      renderHistory();
     }
 
     function exportCSV() {
