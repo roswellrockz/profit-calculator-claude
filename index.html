@@ -112,41 +112,46 @@
     }
 
     .topbar {
-      display: flex;
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
       align-items: center;
-      justify-content: space-between;
-      gap: 16px;
       padding-bottom: 20px;
       margin-bottom: 28px;
       border-bottom: 1px solid var(--border);
     }
+    .topbar .brand { grid-column: 2; justify-self: center; }
+    .topbar .sync-wrap { grid-column: 3; justify-self: end; }
     .brand {
       display: flex;
       align-items: center;
       gap: 10px;
     }
     .brand-mark {
-      width: 30px; height: 30px;
-      border-radius: 8px;
+      width: 40px; height: 40px;
+      border-radius: 10px;
       background: var(--ink);
       color: var(--bg);
       display: grid; place-items: center;
+      font-size: 18px;
       font-weight: 700;
-      letter-spacing: -0.02em;
+      letter-spacing: -0.03em;
+      flex-shrink: 0;
     }
     .brand-text {
       display: flex;
       flex-direction: column;
-      line-height: 1.1;
+      line-height: 1.2;
     }
     .brand-text strong {
-      font-size: 15px;
-      font-weight: 600;
-      letter-spacing: -0.01em;
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      color: var(--ink);
     }
     .brand-text span {
-      font-size: 12px;
+      font-size: 13px;
       color: var(--ink-3);
+      letter-spacing: 0.01em;
     }
 
     .sync {
@@ -696,9 +701,11 @@
           <span>eBay &amp; Vinted tracker</span>
         </div>
       </div>
-      <div id="sync-pill" class="sync" data-state="idle" role="status" aria-live="polite">
-        <span class="dot"></span>
-        <span class="sync-label">Loading…</span>
+      <div class="sync-wrap">
+        <div id="sync-pill" class="sync" data-state="idle" role="status" aria-live="polite">
+          <span class="dot"></span>
+          <span class="sync-label">Loading…</span>
+        </div>
       </div>
     </header>
 
@@ -1099,7 +1106,7 @@
           setSync('ok', 'Synced');
         } catch (err) {
           console.error(err);
-          setSync('error', 'Sync failed — saved locally');
+          setSync('error', 'Offline');
           toast('Could not save to cloud. Changes stay local.', 'error');
         }
       }, CONFIG.DEBOUNCE_MS);
@@ -1674,10 +1681,10 @@
         const data = await api.load();
         state.sales = (data.sales || []).map(normaliseSale);
         localStorage.setItem('sales_local', JSON.stringify(state.sales));
-        setSync('ok', 'Synced — data available on all your devices');
+        setSync('ok', 'Synced');
       } catch (err) {
         console.error(err);
-        setSync('error', local ? 'Offline \u2014 showing cached data' : 'Offline');
+        setSync('error', 'Offline');
         if (!local) toast('Could not load from cloud. Starting empty.', 'error');
       }
       renderAll();
