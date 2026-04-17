@@ -1,816 +1,1668 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en-GB">
 <head>
-    <meta charset="UTF-8">
-    <title>Profit Calculator & Tracker</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --bg: #f5f4f0;
-            --card: #ffffff;
-            --border: #e8e6e0;
-            --text: #1a1916;
-            --muted: #8a8880;
-            --accent: #2a5cff;
-            --accent-light: #eef1ff;
-            --green: #1a7a4a;
-            --green-light: #e8f5ee;
-            --red: #c0392b;
-            --red-light: #fdf0ee;
-            --orange: #e07b39;
-            --orange-light: #fdf3ec;
-            --shadow: 0 2px 8px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
-        }
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: 'DM Sans', sans-serif;
-            background: var(--bg);
-            color: var(--text);
-            min-height: 100vh;
-            padding: 24px 16px 48px;
-        }
-        .page-header { text-align: center; margin-bottom: 28px; }
-        .page-header h1 { font-size: 26px; font-weight: 600; letter-spacing: -0.5px; }
-        .page-header p { color: var(--muted); font-size: 14px; margin-top: 4px; }
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="description" content="eBay & Vinted profit calculator and sales tracker for UK resellers. Tracks net proceeds, fees, tax, and net profit with cross-device sync." />
+  <meta name="theme-color" content="#f7f5ef" />
+  <title>Profit Calculator &amp; Tracker</title>
 
-        .sync-banner {
-            max-width: 520px;
-            margin: 0 auto 20px;
-            padding: 10px 16px;
-            border-radius: 10px;
-            font-size: 13px;
-            font-weight: 500;
-            text-align: center;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-        }
-        .sync-banner.synced { background: var(--green-light); color: var(--green); }
-        .sync-banner.syncing { background: var(--orange-light); color: var(--orange); }
-        .sync-banner.offline { background: var(--red-light); color: var(--red); }
-        .dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
-        .synced .dot { background: var(--green); }
-        .syncing .dot { background: var(--orange); animation: pulse 1s infinite; }
-        .offline .dot { background: var(--red); }
-        @keyframes pulse { 0%,100%{opacity:1}50%{opacity:0.3} }
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&display=swap"
+    rel="stylesheet"
+  />
 
-        .card { background: var(--card); border-radius: 16px; box-shadow: var(--shadow); padding: 24px; max-width: 520px; margin: 0 auto 20px; }
-        .card.wide { max-width: 1400px; }
-        .card-title { font-size: 17px; font-weight: 600; margin-bottom: 18px; letter-spacing: -0.3px; }
+  <style>
+    /* =========================================================================
+       DESIGN TOKENS
+       ========================================================================= */
+    :root {
+      /* Surface */
+      --bg: #f7f5ef;
+      --bg-subtle: #efece3;
+      --card: #ffffff;
+      --card-elev: #fdfcf8;
+      --border: #e4e0d4;
+      --border-strong: #d2cdbd;
+      --shadow-sm: 0 1px 2px rgba(26, 24, 21, 0.04);
+      --shadow-md: 0 4px 16px rgba(26, 24, 21, 0.06), 0 1px 3px rgba(26, 24, 21, 0.04);
+      --shadow-lg: 0 12px 40px rgba(26, 24, 21, 0.12), 0 4px 12px rgba(26, 24, 21, 0.06);
 
-        .tabs { display: flex; background: var(--bg); border-radius: 10px; padding: 4px; margin-bottom: 20px; gap: 4px; }
-        .tab { flex:1; padding:9px; text-align:center; border-radius:8px; cursor:pointer; font-size:14px; font-weight:500; color:var(--muted); transition:all 0.15s; user-select:none; }
-        .tab.active { background: var(--card); color: var(--text); box-shadow: var(--shadow); }
+      /* Ink */
+      --ink: #1a1815;
+      --ink-2: #4a4740;
+      --ink-3: #8a867c;
+      --ink-4: #b5b1a5;
 
-        .form-group { margin-bottom: 14px; }
-        label { display:block; font-size:13px; font-weight:500; color:var(--muted); margin-bottom:5px; text-transform:uppercase; letter-spacing:0.4px; }
-        input[type="number"], input[type="text"], input[type="date"] {
-            width:100%; padding:11px 13px; font-size:15px; font-family:'DM Sans',sans-serif;
-            border:1.5px solid var(--border); border-radius:10px; background:var(--bg); color:var(--text); transition:border-color 0.15s;
-        }
-        input:focus { outline:none; border-color:var(--accent); background:#fff; }
+      /* Accents */
+      --accent: #1e3fb8;
+      --accent-hover: #162f8e;
+      --accent-soft: #e8ecf8;
+      --accent-ring: rgba(30, 63, 184, 0.18);
 
-        .btn { width:100%; padding:13px; border:none; border-radius:10px; font-size:15px; font-family:'DM Sans',sans-serif; font-weight:600; cursor:pointer; transition:all 0.15s; margin-top:14px; }
-        .btn-primary { background:var(--accent); color:#fff; }
-        .btn-primary:hover { background:#1a4de8; }
-        .btn-success { background:var(--green); color:#fff; }
-        .btn-success:hover { background:#145e38; }
-        .btn-muted { background:var(--bg); color:var(--text); border:1.5px solid var(--border); }
-        .btn-muted:hover { background:var(--border); }
-        .btn-sm { width:auto; padding:6px 12px; font-size:12px; margin:0; border-radius:7px; }
-        .btn-danger-sm { background:var(--red-light); color:var(--red); font-weight:600; }
-        .btn-danger-sm:hover { background:#f5d5d2; }
-        .btn-warn-sm { background:var(--orange-light); color:var(--orange); font-weight:600; }
-        .btn-warn-sm:hover { background:#f9e4d4; }
-        .btn-undo-sm { background:#f0f0ee; color:var(--muted); font-weight:600; }
-        .btn-undo-sm:hover { background:var(--border); }
+      /* Semantics */
+      --pos: #0a6b3a;
+      --pos-soft: #e4f1ea;
+      --neg: #a82e20;
+      --neg-soft: #fbe9e5;
+      --warn: #a35d12;
+      --warn-soft: #f8ecd8;
 
-        .result-box { margin-top:16px; padding:16px; border-radius:12px; background:var(--green-light); border:1.5px solid #c0e8d0; display:none; }
-        .result-box.show { display:block; }
-        .result-box.loss { background:var(--red-light); border-color:#f0c0ba; }
-        .result-label { font-size:12px; color:var(--muted); font-weight:500; text-transform:uppercase; letter-spacing:0.4px; }
-        .result-item { display:flex; justify-content:space-between; margin-top:8px; font-size:14px; }
-        .result-item.total { font-size:17px; font-weight:600; margin-top:12px; padding-top:10px; border-top:1px solid rgba(0,0,0,0.08); }
+      /* Platform tints */
+      --ebay: #0d4bb8;
+      --vinted: #0c6e57;
 
-        .summary { display:grid; grid-template-columns:repeat(5,1fr); gap:12px; margin-bottom:20px; }
-        @media(max-width:640px){.summary{grid-template-columns:repeat(3,1fr);}}
-        @media(max-width:400px){.summary{grid-template-columns:repeat(2,1fr);}}
-        .summary-item { background:var(--bg); border-radius:12px; padding:14px 12px; text-align:center; }
-        .s-label { font-size:11px; color:var(--muted); font-weight:500; text-transform:uppercase; letter-spacing:0.4px; }
-        .s-value { font-size:20px; font-weight:600; margin-top:4px; letter-spacing:-0.5px; }
-        .s-value.positive { color:var(--green); }
-        .s-value.negative { color:var(--red); }
+      /* Typography scale */
+      --font-sans: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+      --font-mono: 'DM Mono', 'SF Mono', ui-monospace, Menlo, monospace;
 
-        .filter-row { display:flex; gap:10px; margin-bottom:14px; flex-wrap:wrap; }
-        .filter-row input { flex:1; min-width:140px; margin:0; }
-        .filter-row .btn { width:auto; margin:0; padding:11px 16px; font-size:13px; }
-        .filter-info { padding:10px 14px; background:var(--accent-light); color:var(--accent); border-radius:8px; font-size:13px; font-weight:500; margin-bottom:14px; }
+      /* Motion */
+      --ease: cubic-bezier(0.2, 0.6, 0.2, 1);
+      --dur-1: 120ms;
+      --dur-2: 220ms;
 
-        .table-wrapper { border:1.5px solid var(--border); border-radius:12px; overflow:hidden; }
-        .scroll-x { overflow-x:auto; }
-        table { width:100%; border-collapse:collapse; font-size:13px; table-layout:fixed; }
-        th { background:var(--bg); padding:10px 10px; text-align:left; font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:0.5px; color:var(--muted); white-space:nowrap; }
-        td { padding:10px 10px; border-top:1px solid var(--border); vertical-align:middle; white-space:nowrap; }
-        td.item-cell { white-space:normal; word-break:break-word; }
-        th:nth-child(1), td:nth-child(1) { width:110px; }
-        th:nth-child(2), td:nth-child(2) { width:auto; min-width:160px; }
-        th:nth-child(3), td:nth-child(3) { width:75px; }
-        th:nth-child(4), td:nth-child(4) { width:90px; }
-        th:nth-child(5), td:nth-child(5) { width:80px; }
-        th:nth-child(6), td:nth-child(6) { width:85px; }
-        th:nth-child(7), td:nth-child(7) { width:70px; }
-        th:nth-child(8), td:nth-child(8) { width:70px; }
-        th:nth-child(9), td:nth-child(9) { width:80px; }
-        th:nth-child(10), td:nth-child(10) { width:170px; }
-        tr:hover td { background:var(--bg); }
+      /* Layout */
+      --radius-xs: 6px;
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 16px;
+      --max-w: 1180px;
+    }
 
-        .badge { display:inline-block; padding:3px 8px; border-radius:5px; font-size:11px; font-weight:600; }
-        .badge-ebay { background:#e3f0ff; color:#1a5cd4; }
-        .badge-vinted { background:#fce4f0; color:#b01d6e; }
-        .badge-sold { background:var(--green-light); color:var(--green); }
-        .badge-refunded { background:var(--red-light); color:var(--red); }
+    /* =========================================================================
+       RESET
+       ========================================================================= */
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    html { -webkit-text-size-adjust: 100%; }
+    body {
+      background: var(--bg);
+      color: var(--ink);
+      font-family: var(--font-sans);
+      font-size: 15px;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      min-height: 100vh;
+      font-feature-settings: 'ss01', 'ss02', 'cv01', 'cv04';
+    }
+    button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
+    input, select, textarea { font: inherit; color: inherit; }
+    table { border-collapse: collapse; width: 100%; }
+    :focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+      border-radius: 4px;
+    }
+    input[type="number"]::-webkit-outer-spin-button,
+    input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+    input[type="number"] { -moz-appearance: textfield; }
 
-        .profit-pos { color:var(--green); font-weight:600; font-family:'DM Mono',monospace; }
-        .profit-neg { color:var(--red); font-weight:600; font-family:'DM Mono',monospace; }
-        .mono { font-family:'DM Mono',monospace; }
+    ::selection { background: var(--accent-soft); color: var(--accent); }
 
-        .row-refunded td { opacity:0.5; text-decoration:line-through; }
-        .row-refunded td:last-child { text-decoration:none; opacity:1; }
-        .row-refunded td .badge { text-decoration:none; }
+    /* =========================================================================
+       LAYOUT
+       ========================================================================= */
+    .page {
+      max-width: var(--max-w);
+      margin: 0 auto;
+      padding: 28px 20px 72px;
+    }
 
-        .no-results { text-align:center; padding:40px 20px; color:var(--muted); font-size:14px; }
-        .action-row { display:flex; gap:10px; margin-top:16px; flex-wrap:wrap; }
-        .action-row .btn { flex:1; min-width:120px; }
-        .actions-cell { display:flex; gap:6px; }
-        .tab-content { display:none; }
-        .tab-content.active { display:block; }
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding-bottom: 20px;
+      margin-bottom: 28px;
+      border-bottom: 1px solid var(--border);
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .brand-mark {
+      width: 30px; height: 30px;
+      border-radius: 8px;
+      background: var(--ink);
+      color: var(--bg);
+      display: grid; place-items: center;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+    .brand-text {
+      display: flex;
+      flex-direction: column;
+      line-height: 1.1;
+    }
+    .brand-text strong {
+      font-size: 15px;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+    }
+    .brand-text span {
+      font-size: 12px;
+      color: var(--ink-3);
+    }
 
-        .view-toggle { display:flex; background:var(--bg); border-radius:10px; padding:4px; margin-bottom:18px; gap:4px; width:fit-content; }
-        .view-btn { padding:8px 18px; border-radius:7px; cursor:pointer; font-size:13px; font-weight:500; color:var(--muted); transition:all 0.15s; user-select:none; white-space:nowrap; }
-        .view-btn.active { background:var(--card); color:var(--text); box-shadow:var(--shadow); }
+    .sync {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 12px;
+      border-radius: 999px;
+      font-size: 12.5px;
+      font-weight: 500;
+      color: var(--ink-2);
+      background: var(--card);
+      border: 1px solid var(--border);
+    }
+    .sync .dot {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: var(--ink-4);
+      flex-shrink: 0;
+    }
+    .sync[data-state="ok"] .dot { background: var(--pos); box-shadow: 0 0 0 3px var(--pos-soft); }
+    .sync[data-state="syncing"] .dot { background: var(--warn); animation: pulse 1.3s var(--ease) infinite; }
+    .sync[data-state="error"] .dot { background: var(--neg); }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.55; transform: scale(0.85); }
+    }
 
-        .monthly-table table { table-layout:auto; }
-        .monthly-table th, .monthly-table td { white-space:nowrap; width:auto; }
-        .month-row { cursor:pointer; }
-        .month-row:hover td { background:var(--accent-light) !important; }
-        .month-name { font-weight:600; color:var(--text); }
+    .split {
+      display: grid;
+      grid-template-columns: 1.3fr 1fr;
+      gap: 20px;
+      margin-bottom: 28px;
+    }
+    @media (max-width: 900px) {
+      .split { grid-template-columns: 1fr; }
+    }
 
-        .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.45); z-index:1000; display:flex; align-items:center; justify-content:center; padding:16px; }
-        .modal { background:var(--card); border-radius:16px; box-shadow:0 8px 32px rgba(0,0,0,0.18); padding:24px; width:100%; max-width:420px; max-height:90vh; overflow-y:auto; }
-        .modal-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:18px; }
-        .modal-close { background:none; border:none; font-size:18px; cursor:pointer; color:var(--muted); padding:4px 8px; border-radius:6px; line-height:1; }
-        .modal-close:hover { background:var(--bg); color:var(--text); }
-        .btn-edit-sm { background:var(--accent-light); color:var(--accent); font-weight:600; }
-        .btn-edit-sm:hover { background:#dce4ff; }
-    </style>
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+    }
+    .card-header {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+    .card-title {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--ink-3);
+    }
+    .card-heading {
+      font-size: 20px;
+      font-weight: 600;
+      letter-spacing: -0.015em;
+      margin: 2px 0 0;
+    }
+
+    /* =========================================================================
+       CALCULATOR
+       ========================================================================= */
+    .tabs {
+      display: inline-flex;
+      gap: 2px;
+      padding: 4px;
+      background: var(--bg-subtle);
+      border-radius: 10px;
+      margin-bottom: 20px;
+    }
+    .tab {
+      padding: 7px 16px;
+      font-size: 13.5px;
+      font-weight: 500;
+      color: var(--ink-2);
+      border-radius: 7px;
+      transition: color var(--dur-1) var(--ease), background var(--dur-1) var(--ease);
+    }
+    .tab[aria-selected="true"] {
+      background: var(--card);
+      color: var(--ink);
+      box-shadow: var(--shadow-sm);
+    }
+    .tab:hover:not([aria-selected="true"]) { color: var(--ink); }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+    .form-grid > .full { grid-column: 1 / -1; }
+    @media (max-width: 560px) {
+      .form-grid { grid-template-columns: 1fr; }
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .field label {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--ink-2);
+      letter-spacing: 0.005em;
+    }
+    .field .hint {
+      font-size: 11.5px;
+      color: var(--ink-3);
+    }
+    .input-wrap {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+    .input-wrap .prefix {
+      position: absolute;
+      left: 12px;
+      font-family: var(--font-mono);
+      font-size: 13px;
+      color: var(--ink-3);
+      pointer-events: none;
+    }
+    .field input, .field select {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--card);
+      color: var(--ink);
+      font-size: 14px;
+      transition: border-color var(--dur-1) var(--ease), box-shadow var(--dur-1) var(--ease);
+    }
+    .field input[type="number"] { font-family: var(--font-mono); }
+    .input-wrap.currency input { padding-left: 24px; }
+    .field input:hover, .field select:hover { border-color: var(--border-strong); }
+    .field input:focus, .field select:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-ring);
+    }
+    .field input::placeholder { color: var(--ink-4); }
+
+    .breakdown {
+      margin-top: 20px;
+      padding: 16px;
+      background: var(--bg-subtle);
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border);
+    }
+    .breakdown-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 13.5px;
+      padding: 4px 0;
+    }
+    .breakdown-row .label { color: var(--ink-2); }
+    .breakdown-row .value { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+    .breakdown-row.subtract .value { color: var(--neg); }
+    .breakdown-divider {
+      border: 0; border-top: 1px dashed var(--border-strong);
+      margin: 8px 0;
+    }
+    .breakdown-row.total { padding-top: 4px; }
+    .breakdown-row.total .label { font-weight: 600; color: var(--ink); }
+    .breakdown-row.total .value {
+      font-weight: 600;
+      font-size: 18px;
+      color: var(--pos);
+    }
+    .breakdown-row.total .value.neg { color: var(--neg); }
+
+    .actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 18px;
+      flex-wrap: wrap;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 10px 18px;
+      border-radius: 9px;
+      font-size: 14px;
+      font-weight: 500;
+      border: 1px solid transparent;
+      transition: all var(--dur-1) var(--ease);
+      user-select: none;
+    }
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+    }
+    .btn-primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
+    .btn-primary:active { transform: translateY(1px); }
+    .btn-secondary {
+      background: var(--card);
+      color: var(--ink);
+      border-color: var(--border);
+    }
+    .btn-secondary:hover { background: var(--bg-subtle); border-color: var(--border-strong); }
+    .btn-ghost { color: var(--ink-2); padding: 10px 14px; }
+    .btn-ghost:hover { color: var(--ink); background: var(--bg-subtle); }
+    .btn-danger {
+      background: var(--card);
+      color: var(--neg);
+      border-color: var(--border);
+    }
+    .btn-danger:hover { background: var(--neg-soft); border-color: var(--neg); }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* =========================================================================
+       SNAPSHOT
+       ========================================================================= */
+    .snapshot-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+    .stat {
+      padding: 16px;
+      background: var(--card-elev);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+    }
+    .stat .label {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--ink-3);
+      margin-bottom: 10px;
+    }
+    .stat .value {
+      font-family: var(--font-mono);
+      font-size: 24px;
+      font-weight: 500;
+      letter-spacing: -0.02em;
+      color: var(--ink);
+      font-variant-numeric: tabular-nums;
+    }
+    .stat .value.small { font-size: 20px; }
+    .stat .meta {
+      margin-top: 6px;
+      font-size: 12px;
+      color: var(--ink-3);
+    }
+    .stat.accent { background: var(--accent-soft); border-color: transparent; }
+    .stat.accent .label { color: var(--accent); }
+    .stat.accent .value { color: var(--accent); }
+
+    /* =========================================================================
+       SALES HISTORY
+       ========================================================================= */
+    .history-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+      margin-bottom: 18px;
+    }
+    .history-toolbar .left,
+    .history-toolbar .right {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .select-compact {
+      padding: 8px 12px;
+      padding-right: 28px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--card) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%238a867c' stroke-width='1.5' fill='none'/%3E%3C/svg%3E") no-repeat right 10px center;
+      font-size: 13px;
+      color: var(--ink);
+      -webkit-appearance: none;
+      appearance: none;
+      cursor: pointer;
+    }
+    .select-compact:hover { border-color: var(--border-strong); }
+
+    .summary-row {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 1px;
+      background: var(--border);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      margin-bottom: 20px;
+    }
+    .summary-cell {
+      background: var(--card-elev);
+      padding: 14px 16px;
+    }
+    .summary-cell .label {
+      font-size: 10.5px;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--ink-3);
+      margin-bottom: 6px;
+    }
+    .summary-cell .value {
+      font-family: var(--font-mono);
+      font-size: 18px;
+      font-weight: 500;
+      font-variant-numeric: tabular-nums;
+    }
+    .summary-cell .value.pos { color: var(--pos); }
+    .summary-cell .value.neg { color: var(--neg); }
+    @media (max-width: 780px) {
+      .summary-row { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 380px) {
+      .summary-row { grid-template-columns: 1fr; }
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      background: var(--card);
+      -webkit-overflow-scrolling: touch;
+    }
+    table.sales {
+      min-width: 860px;
+      font-size: 13.5px;
+    }
+    table.sales thead th {
+      text-align: left;
+      font-size: 10.5px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--ink-3);
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--border);
+      background: var(--card-elev);
+      position: sticky;
+      top: 0;
+      z-index: 1;
+    }
+    table.sales tbody td {
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: middle;
+    }
+    table.sales tbody tr:last-child td { border-bottom: 0; }
+    table.sales tbody tr:hover { background: var(--bg-subtle); }
+    table.sales .num {
+      font-family: var(--font-mono);
+      font-variant-numeric: tabular-nums;
+      text-align: right;
+      white-space: nowrap;
+    }
+    table.sales .num.pos { color: var(--pos); }
+    table.sales .num.neg { color: var(--neg); }
+    table.sales th.num { text-align: right; }
+    table.sales .item-cell {
+      max-width: 280px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 3px 9px;
+      border-radius: 999px;
+      font-size: 11.5px;
+      font-weight: 500;
+    }
+    .pill.ebay { background: var(--accent-soft); color: var(--ebay); }
+    .pill.vinted { background: #e0f0eb; color: var(--vinted); }
+    .pill.sale { background: var(--pos-soft); color: var(--pos); }
+    .pill.refund { background: var(--neg-soft); color: var(--neg); }
+
+    .row-actions {
+      display: flex;
+      gap: 4px;
+      justify-content: flex-end;
+    }
+    .icon-btn {
+      width: 28px; height: 28px;
+      display: grid; place-items: center;
+      border-radius: 6px;
+      color: var(--ink-3);
+      transition: all var(--dur-1) var(--ease);
+    }
+    .icon-btn:hover { color: var(--ink); background: var(--bg-subtle); }
+    .icon-btn.danger:hover { color: var(--neg); background: var(--neg-soft); }
+    .icon-btn svg { width: 15px; height: 15px; }
+
+    .table-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 16px;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .count-note {
+      font-size: 12.5px;
+      color: var(--ink-3);
+    }
+
+    .empty {
+      padding: 56px 24px;
+      text-align: center;
+      color: var(--ink-3);
+    }
+    .empty h3 {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--ink-2);
+      margin: 0 0 4px;
+    }
+    .empty p { font-size: 13.5px; margin: 0; }
+
+    /* =========================================================================
+       MODAL
+       ========================================================================= */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(26, 24, 21, 0.45);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+      display: none;
+      z-index: 50;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .modal-backdrop[data-open="true"] {
+      display: flex;
+      animation: fadeIn var(--dur-2) var(--ease);
+    }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    .modal {
+      background: var(--card);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-lg);
+      width: 100%;
+      max-width: 520px;
+      max-height: calc(100vh - 40px);
+      overflow-y: auto;
+      animation: rise var(--dur-2) var(--ease);
+    }
+    @keyframes rise { from { transform: translateY(12px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px 24px 14px;
+      border-bottom: 1px solid var(--border);
+    }
+    .modal-title { font-size: 16px; font-weight: 600; }
+    .modal-close {
+      width: 28px; height: 28px;
+      border-radius: 6px;
+      display: grid; place-items: center;
+      color: var(--ink-3);
+    }
+    .modal-close:hover { background: var(--bg-subtle); color: var(--ink); }
+    .modal-body { padding: 20px 24px; }
+    .modal-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      padding: 14px 24px 20px;
+      border-top: 1px solid var(--border);
+    }
+
+    /* =========================================================================
+       TOAST
+       ========================================================================= */
+    .toast-stack {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      z-index: 100;
+      pointer-events: none;
+    }
+    .toast {
+      background: var(--ink);
+      color: var(--bg);
+      padding: 10px 16px;
+      border-radius: 8px;
+      font-size: 13.5px;
+      font-weight: 500;
+      box-shadow: var(--shadow-md);
+      animation: toastIn var(--dur-2) var(--ease);
+      pointer-events: auto;
+    }
+    .toast.error { background: var(--neg); }
+    .toast.success { background: var(--pos); }
+    @keyframes toastIn { from { transform: translateY(8px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+    /* =========================================================================
+       UTILITIES
+       ========================================================================= */
+    .sr-only {
+      position: absolute;
+      width: 1px; height: 1px;
+      padding: 0; margin: -1px;
+      overflow: hidden; clip: rect(0,0,0,0);
+      white-space: nowrap; border: 0;
+    }
+    .hidden { display: none !important; }
+
+    @media print {
+      body { background: #fff; }
+      .topbar, .actions, .history-toolbar, .row-actions, .table-footer { display: none !important; }
+      .card, .table-wrap { border: 1px solid #ccc; box-shadow: none; }
+      table.sales { min-width: 0; font-size: 11px; }
+    }
+  </style>
 </head>
+
 <body>
-
-<div class="page-header">
-    <h1>Profit Calculator</h1>
-    <p>eBay &amp; Vinted tracker</p>
-</div>
-
-<div id="syncBanner" class="sync-banner syncing">
-    <div class="dot"></div>
-    <span id="syncMsg">Connecting...</span>
-</div>
-
-<div class="card">
-    <div class="tabs">
-        <div class="tab active" onclick="switchTab('ebay')">eBay</div>
-        <div class="tab" onclick="switchTab('vinted')">Vinted</div>
-    </div>
-
-    <div id="ebayTab" class="tab-content active">
-        <form onsubmit="calculateEbay(); return false;">
-            <div class="form-group"><label>Sale Date</label><input type="date" id="ebayDate" required></div>
-            <div class="form-group"><label>Item Name</label><input type="text" id="ebayItemName" placeholder="e.g. PS3 Ratatouille" required></div>
-            <div class="form-group"><label>Net Proceeds from eBay (£)</label><input type="number" id="ebayNetProceeds" step="0.01" placeholder="0.00" required></div>
-            <div class="form-group"><label>Cost of Goods (£)</label><input type="number" id="ebayCost" step="0.01" placeholder="0.00" required></div>
-            <div class="form-group"><label>Shipping Cost (£)</label><input type="number" id="ebayShipping" step="0.01" placeholder="0.00" required></div>
-            <button type="submit" class="btn btn-success">Calculate</button>
-        </form>
-        <div id="ebayResult" class="result-box"></div>
-        <button class="btn btn-success" id="ebayAddBtn" onclick="addEbayToHistory()" style="display:none;">Add to History</button>
-    </div>
-
-    <div id="vintedTab" class="tab-content">
-        <form onsubmit="calculateVinted(); return false;">
-            <div class="form-group"><label>Sale Date</label><input type="date" id="vintedDate" required></div>
-            <div class="form-group"><label>Item Name</label><input type="text" id="vintedItemName" placeholder="e.g. Nike Trainers" required></div>
-            <div class="form-group"><label>Sale Price (£)</label><input type="number" id="vintedSalePrice" step="0.01" placeholder="0.00" required></div>
-            <div class="form-group"><label>Cost of Goods (£)</label><input type="number" id="vintedCost" step="0.01" placeholder="0.00" required></div>
-            <button type="submit" class="btn btn-success">Calculate</button>
-        </form>
-        <div id="vintedResult" class="result-box"></div>
-        <button class="btn btn-success" id="vintedAddBtn" onclick="addVintedToHistory()" style="display:none;">Add to History</button>
-    </div>
-</div>
-
-<div class="card wide">
-    <div class="card-title">Sales History</div>
-
-    <div class="view-toggle">
-        <div class="view-btn active" onclick="switchView('all')">All Sales</div>
-        <div class="view-btn" onclick="switchView('monthly')">Monthly</div>
-    </div>
-
-    <!-- ALL SALES VIEW -->
-    <div id="allSalesView">
-        <div class="filter-row">
-            <input type="date" id="dateFilter" onchange="filterHistory()">
-            <button class="btn btn-muted btn-sm" style="padding:11px 16px;font-size:13px;" onclick="clearDateFilter()">All Dates</button>
+  <div class="page">
+    <!-- ===================== TOP BAR ===================== -->
+    <header class="topbar" role="banner">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true">P</div>
+        <div class="brand-text">
+          <strong>Profit Calculator</strong>
+          <span>eBay &amp; Vinted tracker</span>
         </div>
-        <div class="filter-row">
-            <input type="text" id="searchInput" placeholder="Search by item name..." oninput="filterHistory()">
+      </div>
+      <div id="sync-pill" class="sync" data-state="idle" role="status" aria-live="polite">
+        <span class="dot"></span>
+        <span class="sync-label">Loading…</span>
+      </div>
+    </header>
+
+    <!-- ===================== CALCULATOR + SNAPSHOT ===================== -->
+    <div class="split">
+      <!-- Calculator card -->
+      <section class="card" aria-labelledby="calc-title">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Calculate</div>
+            <h2 class="card-heading" id="calc-title">New sale</h2>
+          </div>
         </div>
 
-        <div id="filterInfo" class="filter-info" style="display:none;"></div>
-
-        <div class="summary">
-            <div class="summary-item"><div class="s-label">Sales</div><div class="s-value" id="totalSales">0</div></div>
-            <div class="summary-item"><div class="s-label">Refunds</div><div class="s-value negative" id="totalRefunds">0</div></div>
-            <div class="summary-item"><div class="s-label">Revenue</div><div class="s-value" id="totalRevenue">£0.00</div></div>
-            <div class="summary-item"><div class="s-label">Tax</div><div class="s-value" id="totalTax">£0.00</div></div>
-            <div class="summary-item"><div class="s-label">Net Profit</div><div class="s-value positive" id="totalProfit">£0.00</div></div>
+        <div class="tabs" role="tablist" aria-label="Platform">
+          <button class="tab" role="tab" aria-selected="true" data-platform="ebay" type="button">eBay</button>
+          <button class="tab" role="tab" aria-selected="false" data-platform="vinted" type="button">Vinted</button>
         </div>
 
-        <div class="table-wrapper scroll-x">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Date</th><th>Item</th><th>Platform</th><th>Status</th>
-                        <th>COG</th><th>Payout</th><th>Ship</th><th>Tax</th><th>Profit</th><th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody id="historyBody"></tbody>
-            </table>
-            <div class="no-results" id="noResults">No sales yet. Add your first sale above!</div>
-        </div>
-
-        <div class="action-row">
-            <button class="btn btn-muted" onclick="exportCSV()">Export CSV</button>
-            <button class="btn btn-danger-sm" style="padding:13px;font-size:14px;flex:1;border-radius:10px;margin-top:0;" onclick="clearAllHistory()">Clear All</button>
-        </div>
-    </div>
-
-    <!-- MONTHLY VIEW -->
-    <div id="monthlyView" style="display:none;">
-        <div class="summary" style="margin-bottom:20px;">
-            <div class="summary-item"><div class="s-label">Sales</div><div class="s-value" id="mTotalSales">0</div></div>
-            <div class="summary-item"><div class="s-label">Refunds</div><div class="s-value negative" id="mTotalRefunds">0</div></div>
-            <div class="summary-item"><div class="s-label">Revenue</div><div class="s-value" id="mTotalRevenue">£0.00</div></div>
-            <div class="summary-item"><div class="s-label">Tax</div><div class="s-value" id="mTotalTax">£0.00</div></div>
-            <div class="summary-item"><div class="s-label">Net Profit</div><div class="s-value positive" id="mTotalProfit">£0.00</div></div>
-        </div>
-        <div class="table-wrapper monthly-table">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Month</th><th>Sales</th><th>Refunds</th><th>eBay</th><th>Vinted</th><th>Revenue</th><th>Tax</th><th>Net Profit</th>
-                    </tr>
-                </thead>
-                <tbody id="monthlyBody"></tbody>
-            </table>
-            <div class="no-results" id="noMonthly" style="display:none;">No sales yet.</div>
-        </div>
-    </div>
-</div>
-
-<!-- EDIT MODAL -->
-<div id="editModal" class="modal-overlay" style="display:none;" onclick="closeEditModalOverlay(event)">
-    <div class="modal">
-        <div class="modal-header">
-            <span class="card-title" style="margin:0;">Edit Sale</span>
-            <button class="modal-close" onclick="closeEditModal()">✕</button>
-        </div>
-
-        <div class="form-group">
-            <label>Platform</label>
-            <div class="tabs" style="margin-bottom:0;">
-                <div class="tab active" id="editTabEbay" onclick="updateEditPlatform('ebay')">eBay</div>
-                <div class="tab" id="editTabVinted" onclick="updateEditPlatform('vinted')">Vinted</div>
+        <form id="calc-form" autocomplete="off" novalidate>
+          <div class="form-grid">
+            <div class="field">
+              <label for="f-date">Sale date</label>
+              <input type="date" id="f-date" required />
             </div>
+            <div class="field">
+              <label for="f-name">Item name</label>
+              <input type="text" id="f-name" maxlength="120" placeholder="e.g. PS4 Slim 500GB" required />
+            </div>
+
+            <div class="field full" id="field-proceeds">
+              <label for="f-proceeds">
+                <span data-platform-label="ebay">Net proceeds from eBay</span>
+                <span data-platform-label="vinted" hidden>Sale price</span>
+              </label>
+              <div class="input-wrap currency">
+                <span class="prefix">£</span>
+                <input type="number" id="f-proceeds" min="0" step="0.01" inputmode="decimal" placeholder="0.00" required />
+              </div>
+              <span class="hint" data-platform-label="ebay">Amount deposited by eBay after their fees.</span>
+              <span class="hint" data-platform-label="vinted" hidden>Buyer pays Vinted fees — seller keeps full sale price.</span>
+            </div>
+
+            <div class="field">
+              <label for="f-cog">Cost of goods</label>
+              <div class="input-wrap currency">
+                <span class="prefix">£</span>
+                <input type="number" id="f-cog" min="0" step="0.01" inputmode="decimal" placeholder="0.00" required />
+              </div>
+            </div>
+
+            <div class="field" id="field-shipping">
+              <label for="f-ship">Shipping cost</label>
+              <div class="input-wrap currency">
+                <span class="prefix">£</span>
+                <input type="number" id="f-ship" min="0" step="0.01" inputmode="decimal" placeholder="0.00" />
+              </div>
+            </div>
+          </div>
+
+          <!-- Live breakdown -->
+          <div class="breakdown" aria-live="polite">
+            <div class="breakdown-row">
+              <span class="label" data-platform-label="ebay">Net proceeds</span>
+              <span class="label" data-platform-label="vinted" hidden>Sale price</span>
+              <span class="value" id="b-revenue">£0.00</span>
+            </div>
+            <div class="breakdown-row subtract">
+              <span class="label">Cost of goods</span>
+              <span class="value" id="b-cog">−£0.00</span>
+            </div>
+            <div class="breakdown-row subtract" id="row-shipping">
+              <span class="label">Shipping</span>
+              <span class="value" id="b-ship">−£0.00</span>
+            </div>
+            <div class="breakdown-row subtract">
+              <span class="label">Tax reserve (20%)</span>
+              <span class="value" id="b-tax">−£0.00</span>
+            </div>
+            <hr class="breakdown-divider" />
+            <div class="breakdown-row total">
+              <span class="label">Net profit</span>
+              <span class="value" id="b-profit">£0.00</span>
+            </div>
+          </div>
+
+          <div class="actions">
+            <button type="submit" class="btn btn-primary" id="btn-save">Save to history</button>
+            <button type="reset" class="btn btn-ghost" id="btn-reset">Reset</button>
+          </div>
+        </form>
+      </section>
+
+      <!-- Snapshot card -->
+      <aside class="card" aria-labelledby="snap-title">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Performance</div>
+            <h2 class="card-heading" id="snap-title">Snapshot</h2>
+          </div>
+          <select id="snap-range" class="select-compact" aria-label="Snapshot range">
+            <option value="all">All time</option>
+            <option value="month" selected>This month</option>
+            <option value="week">Last 7 days</option>
+            <option value="today">Today</option>
+          </select>
         </div>
 
-        <div class="form-group"><label>Sale Date</label><input type="date" id="editDate" required></div>
-        <div class="form-group"><label>Item Name</label><input type="text" id="editItemName" placeholder="e.g. PS3 Ratatouille" required></div>
-        <div class="form-group"><label id="editPayoutLabel">Net Proceeds from eBay (£)</label><input type="number" id="editNetProceeds" step="0.01" placeholder="0.00" required></div>
-        <div class="form-group"><label>Cost of Goods (£)</label><input type="number" id="editCost" step="0.01" placeholder="0.00" required></div>
-        <div class="form-group" id="editShippingGroup"><label>Shipping Cost (£)</label><input type="number" id="editShipping" step="0.01" placeholder="0.00"></div>
-
-        <div style="display:flex;gap:10px;margin-top:4px;">
-            <button class="btn btn-muted" onclick="closeEditModal()" style="margin-top:0;">Cancel</button>
-            <button class="btn btn-success" onclick="saveEdit()" style="margin-top:0;">Recalculate &amp; Save</button>
+        <div class="snapshot-grid">
+          <div class="stat">
+            <div class="label">Revenue</div>
+            <div class="value small" id="snap-revenue">£0.00</div>
+            <div class="meta" id="snap-sales">0 sales</div>
+          </div>
+          <div class="stat">
+            <div class="label">Tax reserve</div>
+            <div class="value small" id="snap-tax">£0.00</div>
+            <div class="meta">Set aside</div>
+          </div>
+          <div class="stat accent">
+            <div class="label">Net profit</div>
+            <div class="value" id="snap-profit">£0.00</div>
+            <div class="meta" id="snap-margin">— margin</div>
+          </div>
+          <div class="stat">
+            <div class="label">Avg per sale</div>
+            <div class="value small" id="snap-avg">£0.00</div>
+            <div class="meta" id="snap-refunds">0 refunds</div>
+          </div>
         </div>
+      </aside>
     </div>
-</div>
 
-<script>
-// ============================================================
-// JSONBIN CONFIG — bin ID hardcoded for cross-device sync
-// ============================================================
-const MASTER_KEY  = '$2a$10$BeMBR5JmB30csHg0sdWy1eqbmNywGIK9Ccr7XX.3UFelOqDPgJ8XS';
-const BIN_ID      = '6997268143b1c97be98bca53';
-const JSONBIN_URL = 'https://api.jsonbin.io/v3/b';
+    <!-- ===================== SALES HISTORY ===================== -->
+    <section class="card" aria-labelledby="history-title">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Ledger</div>
+          <h2 class="card-heading" id="history-title">Sales history</h2>
+        </div>
+        <div class="tabs" role="tablist" aria-label="View">
+          <button class="tab" role="tab" aria-selected="true" data-view="all" type="button">All sales</button>
+          <button class="tab" role="tab" aria-selected="false" data-view="monthly" type="button">Monthly</button>
+        </div>
+      </div>
 
-// ============================================================
-// STATE
-// ============================================================
-let salesHistory = [];
-let saveTimer = null;
-let currentEbayCalc = null;
-let currentVintedCalc = null;
+      <div class="history-toolbar">
+        <div class="left">
+          <select id="filter-range" class="select-compact" aria-label="Date range">
+            <option value="all">All dates</option>
+            <option value="today">Today</option>
+            <option value="week">Last 7 days</option>
+            <option value="month">This month</option>
+            <option value="year">This year</option>
+          </select>
+          <select id="filter-platform" class="select-compact" aria-label="Platform filter">
+            <option value="all">All platforms</option>
+            <option value="ebay">eBay only</option>
+            <option value="vinted">Vinted only</option>
+          </select>
+        </div>
+        <div class="right">
+          <input
+            type="search"
+            id="filter-search"
+            placeholder="Search items…"
+            class="select-compact"
+            style="padding-right: 12px; background-image: none; min-width: 180px;"
+            aria-label="Search items"
+          />
+        </div>
+      </div>
 
-// ============================================================
-// SYNC STATUS
-// ============================================================
-function setSyncStatus(state, msg) {
-    const banner = document.getElementById('syncBanner');
-    banner.className = 'sync-banner ' + state;
-    document.getElementById('syncMsg').textContent = msg;
-}
+      <div class="summary-row" aria-label="Totals for filtered sales">
+        <div class="summary-cell"><div class="label">Sales</div><div class="value" id="sum-sales">0</div></div>
+        <div class="summary-cell"><div class="label">Refunds</div><div class="value" id="sum-refunds">0</div></div>
+        <div class="summary-cell"><div class="label">Revenue</div><div class="value" id="sum-revenue">£0.00</div></div>
+        <div class="summary-cell"><div class="label">Tax reserve</div><div class="value" id="sum-tax">£0.00</div></div>
+        <div class="summary-cell"><div class="label">Net profit</div><div class="value pos" id="sum-profit">£0.00</div></div>
+      </div>
 
-// ============================================================
-// JSONBIN API
-// ============================================================
-async function getBin() {
-    const res = await fetch(`${JSONBIN_URL}/${BIN_ID}/latest`, {
-        headers: { 'X-Master-Key': MASTER_KEY }
+      <div id="history-body"></div>
+
+      <div class="table-footer">
+        <span class="count-note" id="count-note">No sales yet.</span>
+        <div class="actions" style="margin: 0;">
+          <button class="btn btn-secondary" id="btn-export" type="button">Export CSV</button>
+          <button class="btn btn-danger" id="btn-clear" type="button">Clear all</button>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- ===================== EDIT MODAL ===================== -->
+  <div class="modal-backdrop" id="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <div class="modal">
+      <header class="modal-header">
+        <h3 class="modal-title" id="modal-title">Edit sale</h3>
+        <button class="modal-close" id="modal-close" aria-label="Close" type="button">
+          <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
+            <path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+          </svg>
+        </button>
+      </header>
+      <div class="modal-body">
+        <div class="tabs" role="tablist" aria-label="Platform" style="margin-bottom: 16px;">
+          <button class="tab" role="tab" aria-selected="true" data-edit-platform="ebay" type="button">eBay</button>
+          <button class="tab" role="tab" aria-selected="false" data-edit-platform="vinted" type="button">Vinted</button>
+        </div>
+        <form id="edit-form" autocomplete="off">
+          <div class="form-grid">
+            <div class="field">
+              <label for="e-date">Sale date</label>
+              <input type="date" id="e-date" required />
+            </div>
+            <div class="field">
+              <label for="e-name">Item name</label>
+              <input type="text" id="e-name" maxlength="120" required />
+            </div>
+            <div class="field full">
+              <label for="e-proceeds">
+                <span data-edit-label="ebay">Net proceeds</span>
+                <span data-edit-label="vinted" hidden>Sale price</span>
+              </label>
+              <div class="input-wrap currency">
+                <span class="prefix">£</span>
+                <input type="number" id="e-proceeds" min="0" step="0.01" required />
+              </div>
+            </div>
+            <div class="field">
+              <label for="e-cog">Cost of goods</label>
+              <div class="input-wrap currency">
+                <span class="prefix">£</span>
+                <input type="number" id="e-cog" min="0" step="0.01" required />
+              </div>
+            </div>
+            <div class="field" id="edit-field-shipping">
+              <label for="e-ship">Shipping cost</label>
+              <div class="input-wrap currency">
+                <span class="prefix">£</span>
+                <input type="number" id="e-ship" min="0" step="0.01" />
+              </div>
+            </div>
+            <div class="field full">
+              <label for="e-status">Status</label>
+              <select id="e-status">
+                <option value="sale">Sale</option>
+                <option value="refund">Refund</option>
+              </select>
+            </div>
+          </div>
+        </form>
+      </div>
+      <footer class="modal-footer">
+        <button class="btn btn-ghost" id="modal-cancel" type="button">Cancel</button>
+        <button class="btn btn-primary" id="modal-save" type="button">Save changes</button>
+      </footer>
+    </div>
+  </div>
+
+  <div class="toast-stack" id="toasts" aria-live="polite" aria-atomic="true"></div>
+
+  <script>
+    'use strict';
+
+    /* =========================================================================
+     * CONFIG — JSONBin cross-device sync
+     * ========================================================================= */
+    const CONFIG = Object.freeze({
+      JSONBIN_BIN_ID: '6997268143b1c97be98bca53',
+      JSONBIN_KEY:    '$2a$10$BeMBR5JmB30csHg0sdWy1eqbmNywGIK9Ccr7XX.3UFelOqDPgJ8XS',
+      JSONBIN_BASE:   'https://api.jsonbin.io/v3/b',
+      TAX_RATE:       0.20,
+      DEBOUNCE_MS:    800,
+      SCHEMA_VERSION: 2,
     });
-    if (!res.ok) throw new Error('Fetch failed: ' + res.status);
-    const data = await res.json();
-    return data.record;
-}
 
-async function updateBin(record) {
-    const res = await fetch(`${JSONBIN_URL}/${BIN_ID}`, {
-        method: 'PUT',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-Master-Key': MASTER_KEY
-        },
-        body: JSON.stringify(record)
-    });
-    if (!res.ok) throw new Error('Update failed: ' + res.status);
-}
-
-// ============================================================
-// LOAD
-// ============================================================
-async function loadData() {
-    setSyncStatus('syncing', 'Loading your data...');
-
-    // Show local cache instantly while cloud loads
-    const local = localStorage.getItem('sales_local');
-    if (local) {
-        try { salesHistory = JSON.parse(local); renderHistory(); updateSummary(); } catch(e) {}
-    }
-
-    try {
-        const record = await getBin();
-        salesHistory = Array.isArray(record.sales) ? record.sales : [];
-        localStorage.setItem('sales_local', JSON.stringify(salesHistory));
-        setSyncStatus('synced', 'Synced — data available on all your devices');
-    } catch (e) {
-        console.error('Load error:', e);
-        setSyncStatus('offline', 'Offline — showing locally cached data');
-    }
-
-    renderHistory();
-    updateSummary();
-}
-
-// ============================================================
-// SAVE (debounced 800ms)
-// ============================================================
-function scheduleSave() {
-    clearTimeout(saveTimer);
-    setSyncStatus('syncing', 'Saving...');
-    localStorage.setItem('sales_local', JSON.stringify(salesHistory));
-    saveTimer = setTimeout(async () => {
-        try {
-            await updateBin({ sales: salesHistory });
-            setSyncStatus('synced', 'Saved & synced across all your devices');
-        } catch (e) {
-            console.error('Save error:', e);
-            setSyncStatus('offline', 'Cloud save failed — saved locally');
-        }
-    }, 800);
-}
-
-// ============================================================
-// TAB SWITCHING
-// ============================================================
-function switchTab(tab) {
-    document.querySelectorAll('.tab').forEach((t, i) => {
-        t.classList.toggle('active', (tab==='ebay'&&i===0)||(tab==='vinted'&&i===1));
-    });
-    document.getElementById('ebayTab').classList.toggle('active', tab==='ebay');
-    document.getElementById('vintedTab').classList.toggle('active', tab==='vinted');
-}
-
-// ============================================================
-// EBAY CALCULATOR
-// ============================================================
-function calculateEbay() {
-    const saleDate    = document.getElementById('ebayDate').value;
-    const itemName    = document.getElementById('ebayItemName').value.trim();
-    const netProceeds = parseFloat(document.getElementById('ebayNetProceeds').value) || 0;
-    const cost        = parseFloat(document.getElementById('ebayCost').value) || 0;
-    const shipping    = parseFloat(document.getElementById('ebayShipping').value) || 0;
-
-    const preTaxProfit = netProceeds - cost - shipping;
-    const tax          = preTaxProfit > 0 ? preTaxProfit * 0.20 : 0;
-    const finalProfit  = preTaxProfit - tax;
-
-    currentEbayCalc = {
-        itemName, netProceeds, cost, shipping,
-        preTaxProfit, tax, finalProfit,
+    /* =========================================================================
+     * STATE
+     * ========================================================================= */
+    const state = {
+      sales: [],
+      ui: {
         platform: 'ebay',
-        date: new Date(saleDate + 'T12:00:00').toISOString(),
-        refunded: false
+        view: 'all',
+        range: 'all',
+        platformFilter: 'all',
+        search: '',
+        editingId: null,
+        editPlatform: 'ebay',
+      },
     };
 
-    const box = document.getElementById('ebayResult');
-    box.innerHTML = `
-        <div class="result-label">${itemName}</div>
-        <div class="result-item"><span>Pre-tax profit</span><span class="mono">£${preTaxProfit.toFixed(2)}</span></div>
-        <div class="result-item"><span>Tax (20%)</span><span class="mono">£${tax.toFixed(2)}</span></div>
-        <div class="result-item total"><span>Final Profit</span><span>£${finalProfit.toFixed(2)}</span></div>
-    `;
-    box.className = 'result-box show' + (finalProfit < 0 ? ' loss' : '');
-    document.getElementById('ebayAddBtn').style.display = 'block';
-}
+    let saveTimer = null;
 
-function addEbayToHistory() {
-    if (!currentEbayCalc) return;
-    currentEbayCalc.id = Date.now().toString();
-    salesHistory.unshift(currentEbayCalc);
-    scheduleSave(); renderHistory(); updateSummary();
+    /* =========================================================================
+     * DOM SHORTCUTS
+     * ========================================================================= */
+    const $ = (sel, root = document) => root.querySelector(sel);
+    const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
 
-    const today = new Date().toISOString().slice(0,10);
-    document.getElementById('ebayDate').value = today;
-    ['ebayItemName','ebayNetProceeds','ebayCost','ebayShipping'].forEach(id => document.getElementById(id).value = '');
-    document.getElementById('ebayResult').className = 'result-box';
-    document.getElementById('ebayAddBtn').style.display = 'none';
-    currentEbayCalc = null;
-    document.getElementById('ebayItemName').focus();
-}
+    /* =========================================================================
+     * UTILITIES
+     * ========================================================================= */
+    const fmtGBP = (n) =>
+      new Intl.NumberFormat('en-GB', {
+        style: 'currency',
+        currency: 'GBP',
+        minimumFractionDigits: 2,
+      }).format(Number.isFinite(n) ? n : 0);
 
-// ============================================================
-// VINTED CALCULATOR
-// ============================================================
-function calculateVinted() {
-    const saleDate  = document.getElementById('vintedDate').value;
-    const itemName  = document.getElementById('vintedItemName').value.trim();
-    const salePrice = parseFloat(document.getElementById('vintedSalePrice').value) || 0;
-    const cost      = parseFloat(document.getElementById('vintedCost').value) || 0;
-
-    const preTaxProfit = salePrice - cost;
-    const tax          = preTaxProfit > 0 ? preTaxProfit * 0.20 : 0;
-    const finalProfit  = preTaxProfit - tax;
-
-    currentVintedCalc = {
-        itemName, netProceeds: salePrice, cost, shipping: 0,
-        preTaxProfit, tax, finalProfit,
-        platform: 'vinted',
-        date: new Date(saleDate + 'T12:00:00').toISOString(),
-        refunded: false
+    const fmtSignedGBP = (n, { subtract = false } = {}) => {
+      const v = Number.isFinite(n) ? n : 0;
+      return subtract ? `\u2212${fmtGBP(Math.abs(v))}` : fmtGBP(v);
     };
 
-    const box = document.getElementById('vintedResult');
-    box.innerHTML = `
-        <div class="result-label">${itemName}</div>
-        <div class="result-item"><span>Pre-tax profit</span><span class="mono">£${preTaxProfit.toFixed(2)}</span></div>
-        <div class="result-item"><span>Tax (20%)</span><span class="mono">£${tax.toFixed(2)}</span></div>
-        <div class="result-item total"><span>Final Profit</span><span>£${finalProfit.toFixed(2)}</span></div>
-    `;
-    box.className = 'result-box show' + (finalProfit < 0 ? ' loss' : '');
-    document.getElementById('vintedAddBtn').style.display = 'block';
-}
+    const parseNum = (val) => {
+      const n = parseFloat(val);
+      return Number.isFinite(n) && n >= 0 ? n : 0;
+    };
 
-function addVintedToHistory() {
-    if (!currentVintedCalc) return;
-    currentVintedCalc.id = Date.now().toString();
-    salesHistory.unshift(currentVintedCalc);
-    scheduleSave(); renderHistory(); updateSummary();
+    const esc = (s) =>
+      String(s ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
 
-    const today = new Date().toISOString().slice(0,10);
-    document.getElementById('vintedDate').value = today;
-    ['vintedItemName','vintedSalePrice','vintedCost'].forEach(id => document.getElementById(id).value = '');
-    document.getElementById('vintedResult').className = 'result-box';
-    document.getElementById('vintedAddBtn').style.display = 'none';
-    currentVintedCalc = null;
-    document.getElementById('vintedItemName').focus();
-}
+    const todayISO = () => {
+      const d = new Date();
+      const pad = (n) => String(n).padStart(2, '0');
+      return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+    };
 
-// ============================================================
-// RENDER TABLE
-// ============================================================
-function renderHistory(data) {
-    const rows = data !== undefined ? data : salesHistory;
-    const tbody = document.getElementById('historyBody');
-    const noResults = document.getElementById('noResults');
+    const uid = () =>
+      `s_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
 
-    if (rows.length === 0) {
-        tbody.innerHTML = '';
-        noResults.style.display = 'block';
+    /* =========================================================================
+     * DOMAIN MATHS
+     * Tax is computed on pre-tax profit (proceeds minus costs), not on revenue.
+     * eBay:   profit = (proceeds − cog − shipping) × 0.80
+     * Vinted: profit = (proceeds − cog) × 0.80
+     * ========================================================================= */
+    function computeSale({ platform, proceeds, cog, shipping }) {
+      const p = parseNum(proceeds);
+      const c = parseNum(cog);
+      const s = platform === 'ebay' ? parseNum(shipping) : 0;
+      const preTaxProfit = p - c - s;
+      const tax = preTaxProfit > 0 ? preTaxProfit * CONFIG.TAX_RATE : 0;
+      const profit = preTaxProfit - tax;
+      return { proceeds: p, cog: c, shipping: s, tax, profit };
+    }
+
+    /* =========================================================================
+     * REMOTE SYNC (JSONBin)
+     * ========================================================================= */
+    const api = {
+      async load() {
+        const url = `${CONFIG.JSONBIN_BASE}/${CONFIG.JSONBIN_BIN_ID}/latest`;
+        const res = await fetch(url, {
+          headers: {
+            'X-Master-Key': CONFIG.JSONBIN_KEY,
+            'X-Bin-Meta': 'false',
+          },
+        });
+        if (!res.ok) throw new Error(`Load failed: ${res.status}`);
+        const data = await res.json();
+        if (Array.isArray(data)) return { sales: data, schema: 1 };
+        if (data && Array.isArray(data.sales)) return data;
+        return { sales: [], schema: CONFIG.SCHEMA_VERSION };
+      },
+
+      async save(payload) {
+        const url = `${CONFIG.JSONBIN_BASE}/${CONFIG.JSONBIN_BIN_ID}`;
+        const res = await fetch(url, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Master-Key': CONFIG.JSONBIN_KEY,
+          },
+          body: JSON.stringify(payload),
+        });
+        if (!res.ok) throw new Error(`Save failed: ${res.status}`);
+        return res.json();
+      },
+    };
+
+    function scheduleSync() {
+      setSync('syncing', 'Saving…');
+      // Save locally immediately so data isn't lost if cloud fails
+      localStorage.setItem('sales_local', JSON.stringify(state.sales));
+      clearTimeout(saveTimer);
+      saveTimer = setTimeout(async () => {
+        try {
+          await api.save({ schema: CONFIG.SCHEMA_VERSION, sales: state.sales });
+          setSync('ok', 'Synced');
+        } catch (err) {
+          console.error(err);
+          setSync('error', 'Sync failed — saved locally');
+          toast('Could not save to cloud. Changes stay local.', 'error');
+        }
+      }, CONFIG.DEBOUNCE_MS);
+    }
+
+    function setSync(syncState, label) {
+      const pill = $('#sync-pill');
+      pill.setAttribute('data-state', syncState);
+      $('.sync-label', pill).textContent = label;
+    }
+
+    /* =========================================================================
+     * DATA MIGRATION
+     * Handles both old format (itemName, cost, refunded) and new format.
+     * ========================================================================= */
+    function normaliseSale(raw) {
+      const platform = raw.platform === 'vinted' ? 'vinted' : 'ebay';
+      const base = computeSale({
+        platform,
+        proceeds: raw.proceeds ?? raw.netProceeds ?? raw.salePrice ?? 0,
+        cog:      raw.cog ?? raw.cost ?? raw.costOfGoods ?? 0,
+        shipping: raw.shipping ?? 0,
+      });
+      return {
+        id:        raw.id || uid(),
+        platform,
+        date:      (raw.date || '').slice(0, 10) || todayISO(),
+        name:      String(raw.name || raw.itemName || raw.item || 'Untitled').slice(0, 160),
+        status:    (raw.status === 'refund' || raw.refunded === true) ? 'refund' : 'sale',
+        createdAt: raw.createdAt || new Date().toISOString(),
+        ...base,
+      };
+    }
+
+    /* =========================================================================
+     * FILTERING
+     * ========================================================================= */
+    function inRange(dateStr, range) {
+      if (range === 'all') return true;
+      const d = new Date(dateStr);
+      if (Number.isNaN(d.getTime())) return false;
+      const now = new Date();
+      const startOfDay = (x) => new Date(x.getFullYear(), x.getMonth(), x.getDate());
+      const today = startOfDay(now);
+
+      if (range === 'today') return startOfDay(d).getTime() === today.getTime();
+      if (range === 'week') {
+        const weekAgo = new Date(today);
+        weekAgo.setDate(weekAgo.getDate() - 6);
+        return d >= weekAgo;
+      }
+      if (range === 'month') {
+        return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
+      }
+      if (range === 'year') return d.getFullYear() === now.getFullYear();
+      return true;
+    }
+
+    function filterSales({ range, platform, search } = {}) {
+      const r = range ?? state.ui.range;
+      const p = platform ?? state.ui.platformFilter;
+      const q = (search ?? state.ui.search).trim().toLowerCase();
+      return state.sales.filter((s) => {
+        if (!inRange(s.date, r)) return false;
+        if (p !== 'all' && s.platform !== p) return false;
+        if (q && !s.name.toLowerCase().includes(q)) return false;
+        return true;
+      });
+    }
+
+    function aggregate(list) {
+      let revenue = 0, tax = 0, profit = 0, sales = 0, refunds = 0;
+      for (const s of list) {
+        const sign = s.status === 'refund' ? -1 : 1;
+        revenue += sign * s.proceeds;
+        tax     += sign * s.tax;
+        profit  += sign * s.profit;
+        if (s.status === 'refund') refunds++;
+        else sales++;
+      }
+      const avg = sales > 0 ? profit / sales : 0;
+      const margin = revenue > 0 ? (profit / revenue) * 100 : 0;
+      return { revenue, tax, profit, sales, refunds, avg, margin };
+    }
+
+    /* =========================================================================
+     * RENDERERS
+     * ========================================================================= */
+    function renderAll() {
+      renderLivePreview();
+      renderSnapshot();
+      renderHistory();
+    }
+
+    function renderLivePreview() {
+      const platform = state.ui.platform;
+      const proceeds = parseNum($('#f-proceeds').value);
+      const cog      = parseNum($('#f-cog').value);
+      const shipping = platform === 'ebay' ? parseNum($('#f-ship').value) : 0;
+      const r = computeSale({ platform, proceeds, cog, shipping });
+
+      $('#b-revenue').textContent = fmtGBP(r.proceeds);
+      $('#b-cog').textContent     = fmtSignedGBP(r.cog, { subtract: true });
+      $('#b-ship').textContent    = fmtSignedGBP(r.shipping, { subtract: true });
+      $('#b-tax').textContent     = fmtSignedGBP(r.tax, { subtract: true });
+
+      const profitEl = $('#b-profit');
+      profitEl.textContent = fmtGBP(r.profit);
+      profitEl.classList.toggle('neg', r.profit < 0);
+    }
+
+    function renderSnapshot() {
+      const range = $('#snap-range').value;
+      const subset = state.sales.filter((s) => inRange(s.date, range));
+      const agg = aggregate(subset);
+
+      $('#snap-revenue').textContent = fmtGBP(agg.revenue);
+      $('#snap-tax').textContent     = fmtGBP(agg.tax);
+      $('#snap-profit').textContent  = fmtGBP(agg.profit);
+      $('#snap-avg').textContent     = fmtGBP(agg.avg);
+      $('#snap-sales').textContent   = `${agg.sales} ${agg.sales === 1 ? 'sale' : 'sales'}`;
+      $('#snap-refunds').textContent = `${agg.refunds} ${agg.refunds === 1 ? 'refund' : 'refunds'}`;
+      $('#snap-margin').textContent  = agg.revenue > 0 ? `${agg.margin.toFixed(1)}% margin` : '\u2014 margin';
+    }
+
+    function renderHistory() {
+      const filtered = filterSales();
+      const agg = aggregate(filtered);
+
+      $('#sum-sales').textContent   = String(agg.sales);
+      $('#sum-refunds').textContent = String(agg.refunds);
+      $('#sum-revenue').textContent = fmtGBP(agg.revenue);
+      $('#sum-tax').textContent     = fmtGBP(agg.tax);
+      const profitEl = $('#sum-profit');
+      profitEl.textContent = fmtGBP(agg.profit);
+      profitEl.classList.toggle('pos', agg.profit >= 0);
+      profitEl.classList.toggle('neg', agg.profit < 0);
+
+      const body = $('#history-body');
+      const count = $('#count-note');
+
+      if (filtered.length === 0) {
+        body.innerHTML = `
+          <div class="empty">
+            <h3>Nothing here yet</h3>
+            <p>${state.sales.length === 0
+              ? 'Add your first sale using the calculator above.'
+              : 'No sales match the current filters.'}</p>
+          </div>`;
+        count.textContent = state.sales.length === 0 ? 'No sales yet.' : '0 of ' + state.sales.length;
         return;
-    }
-    noResults.style.display = 'none';
-    tbody.innerHTML = rows.map(sale => {
-        const date = new Date(sale.date).toLocaleDateString('en-GB');
-        const isRefunded = sale.refunded === true;
-        const profitClass = sale.finalProfit >= 0 ? 'profit-pos' : 'profit-neg';
-        const actionBtn = isRefunded
-            ? `<button class="btn btn-undo-sm btn-sm" onclick="toggleRefund('${sale.id}',false)">Undo</button>`
-            : `<button class="btn btn-warn-sm btn-sm" onclick="toggleRefund('${sale.id}',true)">Refund</button>`;
-        return `<tr class="${isRefunded?'row-refunded':''}">
-            <td>${date}</td>
-            <td class="item-cell">${sale.itemName}</td>
-            <td><span class="badge badge-${sale.platform}">${sale.platform==='ebay'?'eBay':'Vinted'}</span></td>
-            <td><span class="badge ${isRefunded?'badge-refunded':'badge-sold'}">${isRefunded?'Refunded':'Sold'}</span></td>
-            <td class="mono">£${sale.cost.toFixed(2)}</td>
-            <td class="mono">£${sale.netProceeds.toFixed(2)}</td>
-            <td class="mono">£${sale.shipping.toFixed(2)}</td>
-            <td class="mono">£${sale.tax.toFixed(2)}</td>
-            <td class="${profitClass}">£${sale.finalProfit.toFixed(2)}</td>
-            <td><div class="actions-cell">
-                <button class="btn btn-edit-sm btn-sm" onclick="openEditModal('${sale.id}')">Edit</button>
-                ${actionBtn}
-                <button class="btn btn-danger-sm btn-sm" onclick="deleteSale('${sale.id}')">✕</button>
-            </div></td>
-        </tr>`;
-    }).join('');
-}
+      }
 
-// ============================================================
-// SUMMARY
-// ============================================================
-function updateSummary(data) {
-    const sales = data !== undefined ? data : salesHistory;
-    const sold = sales.filter(s => !s.refunded);
-    const refunded = sales.filter(s => s.refunded);
-    document.getElementById('totalSales').textContent = sold.length;
-    document.getElementById('totalRefunds').textContent = refunded.length;
-    document.getElementById('totalRevenue').textContent = '£' + sold.reduce((s,x)=>s+x.netProceeds,0).toFixed(2);
-    document.getElementById('totalTax').textContent = '£' + sold.reduce((s,x)=>s+x.tax,0).toFixed(2);
-    const profit = sold.reduce((s,x)=>s+x.finalProfit,0);
-    const el = document.getElementById('totalProfit');
-    el.textContent = '£' + profit.toFixed(2);
-    el.className = 's-value ' + (profit >= 0 ? 'positive' : 'negative');
-}
+      count.textContent = `${filtered.length} of ${state.sales.length} ${state.sales.length === 1 ? 'sale' : 'sales'}`;
 
-// ============================================================
-// REFUND / DELETE / CLEAR
-// ============================================================
-function toggleRefund(id, setRefunded) {
-    const sale = salesHistory.find(s => s.id === id);
-    if (!sale) return;
-    const label = setRefunded ? 'Mark as refunded' : 'Undo refund for';
-    if (!confirm(`${label} "${sale.itemName}"?`)) return;
-    sale.refunded = setRefunded;
-    scheduleSave(); filterHistory();
-}
+      body.innerHTML = state.ui.view === 'monthly'
+        ? renderMonthlyTable(filtered)
+        : renderAllTable(filtered);
 
-function deleteSale(id) {
-    if (!confirm('Delete this sale?')) return;
-    salesHistory = salesHistory.filter(s => s.id !== id);
-    scheduleSave(); filterHistory();
-}
-
-function clearAllHistory() {
-    if (!confirm('Delete ALL sales history? This cannot be undone!')) return;
-    salesHistory = [];
-    scheduleSave(); renderHistory(); updateSummary();
-}
-
-// ============================================================
-// FILTER / SEARCH
-// ============================================================
-function filterHistory() {
-    const search = document.getElementById('searchInput').value.toLowerCase().trim();
-    const date   = document.getElementById('dateFilter').value;
-    const info   = document.getElementById('filterInfo');
-    let filtered = salesHistory;
-
-    if (date) {
-        filtered = filtered.filter(s => new Date(s.date).toISOString().slice(0,10) === date);
-        const display = new Date(date).toLocaleDateString('en-GB', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
-        info.innerHTML = `Showing sales for <strong>${display}</strong>`;
-        info.style.display = 'block';
-    } else {
-        info.style.display = 'none';
+      $$('[data-action="edit"]', body).forEach((btn) =>
+        btn.addEventListener('click', () => openEdit(btn.dataset.id))
+      );
+      $$('[data-action="toggle"]', body).forEach((btn) =>
+        btn.addEventListener('click', () => toggleRefund(btn.dataset.id))
+      );
+      $$('[data-action="delete"]', body).forEach((btn) =>
+        btn.addEventListener('click', () => deleteSale(btn.dataset.id))
+      );
     }
 
-    if (search) filtered = filtered.filter(s => s.itemName.toLowerCase().includes(search));
-    renderHistory(filtered); updateSummary(filtered);
-}
+    function renderAllTable(list) {
+      const sorted = [...list].sort((a, b) => (a.date < b.date ? 1 : -1));
+      const rows = sorted.map((s) => `
+        <tr>
+          <td>${esc(s.date)}</td>
+          <td class="item-cell" title="${esc(s.name)}">${esc(s.name)}</td>
+          <td><span class="pill ${s.platform}">${s.platform === 'ebay' ? 'eBay' : 'Vinted'}</span></td>
+          <td><span class="pill ${s.status}">${s.status === 'refund' ? 'Refund' : 'Sale'}</span></td>
+          <td class="num">${fmtGBP(s.cog)}</td>
+          <td class="num">${fmtGBP(s.proceeds)}</td>
+          <td class="num">${s.platform === 'ebay' ? fmtGBP(s.shipping) : '\u2014'}</td>
+          <td class="num">${fmtGBP(s.tax)}</td>
+          <td class="num ${s.profit >= 0 ? 'pos' : 'neg'}">${fmtGBP(s.profit)}</td>
+          <td>
+            <div class="row-actions">
+              <button class="icon-btn" data-action="toggle" data-id="${s.id}" title="Toggle refund status" aria-label="Toggle refund">
+                ${s.status === 'refund'
+                  ? '<svg viewBox="0 0 16 16"><path d="M3 8l3 3 7-7" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+                  : '<svg viewBox="0 0 16 16"><path d="M5 3h6l1 4M3 7h10l-1 5a2 2 0 01-2 2H6a2 2 0 01-2-2L3 7z" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>'}
+              </button>
+              <button class="icon-btn" data-action="edit" data-id="${s.id}" title="Edit" aria-label="Edit sale">
+                <svg viewBox="0 0 16 16"><path d="M11 2l3 3-8 8H3v-3l8-8z" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linejoin="round"/></svg>
+              </button>
+              <button class="icon-btn danger" data-action="delete" data-id="${s.id}" title="Delete" aria-label="Delete sale">
+                <svg viewBox="0 0 16 16"><path d="M3 4h10M6 4V2h4v2M4 4l1 10h6l1-10" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </button>
+            </div>
+          </td>
+        </tr>
+      `).join('');
 
-function clearDateFilter() {
-    document.getElementById('dateFilter').value = '';
-    document.getElementById('searchInput').value = '';
-    filterHistory();
-}
+      return `
+        <div class="table-wrap">
+          <table class="sales">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Item</th>
+                <th>Platform</th>
+                <th>Status</th>
+                <th class="num">COG</th>
+                <th class="num">Payout</th>
+                <th class="num">Ship</th>
+                <th class="num">Tax</th>
+                <th class="num">Profit</th>
+                <th><span class="sr-only">Actions</span></th>
+              </tr>
+            </thead>
+            <tbody>${rows}</tbody>
+          </table>
+        </div>`;
+    }
 
-// ============================================================
-// EXPORT CSV
-// ============================================================
-function exportCSV() {
-    if (!salesHistory.length) { alert('No sales to export!'); return; }
-    let csv = 'Date,Item Name,Platform,Status,Cost of Goods,Net Proceeds,Shipping,Tax,Final Profit\n';
-    salesHistory.forEach(s => {
-        const date = new Date(s.date).toLocaleDateString('en-GB');
-        csv += `"${date}","${s.itemName}","${s.platform}","${s.refunded?'Refunded':'Sold'}",${s.cost.toFixed(2)},${s.netProceeds.toFixed(2)},${s.shipping.toFixed(2)},${s.tax.toFixed(2)},${s.finalProfit.toFixed(2)}\n`;
-    });
-    const blob = new Blob([csv], { type:'text/csv' });
-    const url  = URL.createObjectURL(blob);
-    const a    = document.createElement('a');
-    a.href = url; a.download = 'sales_history_' + new Date().toISOString().slice(0,10) + '.csv';
-    a.click(); URL.revokeObjectURL(url);
-}
+    function renderMonthlyTable(list) {
+      const groups = new Map();
+      for (const s of list) {
+        const key = s.date.slice(0, 7);
+        if (!groups.has(key)) groups.set(key, []);
+        groups.get(key).push(s);
+      }
+      const keys = [...groups.keys()].sort().reverse();
 
-// ============================================================
-// VIEW SWITCHING (All Sales / Monthly)
-// ============================================================
-let currentView = 'all';
+      const rows = keys.map((key) => {
+        const items = groups.get(key);
+        const agg = aggregate(items);
+        const ebay = aggregate(items.filter((i) => i.platform === 'ebay'));
+        const vinted = aggregate(items.filter((i) => i.platform === 'vinted'));
+        const [y, m] = key.split('-');
+        const monthLabel = new Date(Number(y), Number(m) - 1, 1)
+          .toLocaleString('en-GB', { month: 'long', year: 'numeric' });
+        return `
+          <tr>
+            <td><strong>${esc(monthLabel)}</strong></td>
+            <td class="num">${agg.sales}</td>
+            <td class="num">${agg.refunds}</td>
+            <td class="num">${fmtGBP(ebay.profit)}</td>
+            <td class="num">${fmtGBP(vinted.profit)}</td>
+            <td class="num">${fmtGBP(agg.revenue)}</td>
+            <td class="num">${fmtGBP(agg.tax)}</td>
+            <td class="num ${agg.profit >= 0 ? 'pos' : 'neg'}">${fmtGBP(agg.profit)}</td>
+          </tr>`;
+      }).join('');
 
-function switchView(view) {
-    currentView = view;
-    document.querySelectorAll('.view-btn').forEach((btn, i) => {
-        btn.classList.toggle('active', (view==='all'&&i===0)||(view==='monthly'&&i===1));
-    });
-    document.getElementById('allSalesView').style.display = view === 'all' ? 'block' : 'none';
-    document.getElementById('monthlyView').style.display  = view === 'monthly' ? 'block' : 'none';
-    if (view === 'monthly') renderMonthly();
-}
+      return `
+        <div class="table-wrap">
+          <table class="sales">
+            <thead>
+              <tr>
+                <th>Month</th>
+                <th class="num">Sales</th>
+                <th class="num">Refunds</th>
+                <th class="num">eBay profit</th>
+                <th class="num">Vinted profit</th>
+                <th class="num">Revenue</th>
+                <th class="num">Tax</th>
+                <th class="num">Net profit</th>
+              </tr>
+            </thead>
+            <tbody>${rows}</tbody>
+          </table>
+        </div>`;
+    }
 
-function renderMonthly() {
-    const tbody = document.getElementById('monthlyBody');
-    const noMonthly = document.getElementById('noMonthly');
+    /* =========================================================================
+     * ACTIONS
+     * ========================================================================= */
+    function addSale({ platform, date, name, proceeds, cog, shipping }) {
+      const calc = computeSale({ platform, proceeds, cog, shipping });
+      const sale = {
+        id: uid(),
+        platform,
+        date,
+        name: name.trim(),
+        status: 'sale',
+        createdAt: new Date().toISOString(),
+        ...calc,
+      };
+      state.sales.push(sale);
+      renderAll();
+      scheduleSync();
+      toast('Sale added to history', 'success');
+    }
 
-    if (!salesHistory.length) {
-        tbody.innerHTML = '';
-        noMonthly.style.display = 'block';
-        updateMonthlyTotals([]);
+    function deleteSale(id) {
+      const i = state.sales.findIndex((s) => s.id === id);
+      if (i === -1) return;
+      if (!confirm(`Delete "${state.sales[i].name}"?`)) return;
+      state.sales.splice(i, 1);
+      renderAll();
+      scheduleSync();
+    }
+
+    function toggleRefund(id) {
+      const s = state.sales.find((x) => x.id === id);
+      if (!s) return;
+      s.status = s.status === 'refund' ? 'sale' : 'refund';
+      renderAll();
+      scheduleSync();
+    }
+
+    function updateSale(id, patch) {
+      const s = state.sales.find((x) => x.id === id);
+      if (!s) return;
+      Object.assign(s, patch);
+      Object.assign(s, computeSale(s));
+      renderAll();
+      scheduleSync();
+    }
+
+    function clearAll() {
+      if (state.sales.length === 0) return;
+      if (!confirm(`Delete all ${state.sales.length} sales? This cannot be undone.`)) return;
+      state.sales = [];
+      renderAll();
+      scheduleSync();
+      toast('History cleared', 'success');
+    }
+
+    function exportCSV() {
+      if (state.sales.length === 0) {
+        toast('Nothing to export yet', 'error');
         return;
+      }
+      const header = ['Date', 'Platform', 'Status', 'Item', 'Cost of Goods',
+                      'Net Proceeds', 'Shipping', 'Tax', 'Net Profit'];
+      const rows = [...state.sales]
+        .sort((a, b) => (a.date < b.date ? 1 : -1))
+        .map((s) => [
+          s.date,
+          s.platform,
+          s.status,
+          `"${s.name.replace(/"/g, '""')}"`,
+          s.cog.toFixed(2),
+          s.proceeds.toFixed(2),
+          s.shipping.toFixed(2),
+          s.tax.toFixed(2),
+          s.profit.toFixed(2),
+        ].join(','));
+      const csv = [header.join(','), ...rows].join('\n');
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `sales_history_${todayISO()}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
     }
-    noMonthly.style.display = 'none';
 
-    // Group by YYYY-MM
-    const groups = {};
-    salesHistory.forEach(s => {
-        const key = s.date.slice(0, 7); // "2026-03"
-        if (!groups[key]) groups[key] = [];
-        groups[key].push(s);
-    });
+    /* =========================================================================
+     * UI EVENTS — calculator
+     * ========================================================================= */
+    function switchPlatform(platform) {
+      state.ui.platform = platform;
+      $$('.tabs [data-platform]').forEach((t) =>
+        t.setAttribute('aria-selected', String(t.dataset.platform === platform))
+      );
+      $$('[data-platform-label]').forEach((el) => {
+        el.hidden = el.dataset.platformLabel !== platform;
+      });
+      const showShip = platform === 'ebay';
+      $('#field-shipping').style.display = showShip ? '' : 'none';
+      $('#row-shipping').style.display = showShip ? '' : 'none';
+      renderLivePreview();
+    }
 
-    // Sort newest first
-    const sortedKeys = Object.keys(groups).sort((a, b) => b.localeCompare(a));
+    function handleSubmit(e) {
+      e.preventDefault();
+      const date = $('#f-date').value;
+      const name = $('#f-name').value.trim();
+      const proceeds = parseNum($('#f-proceeds').value);
+      const cog = parseNum($('#f-cog').value);
+      const shipping = parseNum($('#f-ship').value);
 
-    tbody.innerHTML = sortedKeys.map(key => {
-        const sales   = groups[key];
-        const sold    = sales.filter(s => !s.refunded);
-        const refunded = sales.filter(s => s.refunded);
-        const revenue  = sold.reduce((s, x) => s + x.netProceeds, 0);
-        const tax      = sold.reduce((s, x) => s + x.tax, 0);
-        const profit   = sold.reduce((s, x) => s + x.finalProfit, 0);
-        const ebayCount   = sold.filter(s => s.platform === 'ebay').length;
-        const vintedCount = sold.filter(s => s.platform === 'vinted').length;
-        const profitClass = profit >= 0 ? 'profit-pos' : 'profit-neg';
+      if (!date) { toast('Pick a date', 'error'); return; }
+      if (!name) { toast('Name the item', 'error'); return; }
+      if (proceeds <= 0) { toast('Enter a sale amount', 'error'); return; }
 
-        const [year, month] = key.split('-');
-        const monthName = new Date(parseInt(year), parseInt(month) - 1, 1)
-            .toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
+      addSale({ platform: state.ui.platform, date, name, proceeds, cog, shipping });
 
-        return `<tr class="month-row" onclick="goToMonth('${key}')" title="Click to view ${monthName} sales">
-            <td class="month-name">${monthName}</td>
-            <td>${sold.length}</td>
-            <td>${refunded.length > 0 ? `<span style="color:var(--red)">${refunded.length}</span>` : '0'}</td>
-            <td>${ebayCount > 0 ? ebayCount : '<span style="color:var(--muted)">—</span>'}</td>
-            <td>${vintedCount > 0 ? vintedCount : '<span style="color:var(--muted)">—</span>'}</td>
-            <td class="mono">£${revenue.toFixed(2)}</td>
-            <td class="mono">£${tax.toFixed(2)}</td>
-            <td class="${profitClass}">£${profit.toFixed(2)}</td>
-        </tr>`;
-    }).join('');
+      $('#f-name').value = '';
+      $('#f-proceeds').value = '';
+      $('#f-cog').value = '';
+      $('#f-ship').value = '';
+      renderLivePreview();
+      $('#f-name').focus();
+    }
 
-    updateMonthlyTotals(salesHistory);
-}
+    /* =========================================================================
+     * UI EVENTS — modal (edit)
+     * ========================================================================= */
+    function openEdit(id) {
+      const s = state.sales.find((x) => x.id === id);
+      if (!s) return;
+      state.ui.editingId = id;
+      state.ui.editPlatform = s.platform;
 
-function updateMonthlyTotals(sales) {
-    const sold = sales.filter(s => !s.refunded);
-    const refunded = sales.filter(s => s.refunded);
-    document.getElementById('mTotalSales').textContent = sold.length;
-    document.getElementById('mTotalRefunds').textContent = refunded.length;
-    document.getElementById('mTotalRevenue').textContent = '£' + sold.reduce((s,x)=>s+x.netProceeds,0).toFixed(2);
-    document.getElementById('mTotalTax').textContent = '£' + sold.reduce((s,x)=>s+x.tax,0).toFixed(2);
-    const profit = sold.reduce((s,x)=>s+x.finalProfit,0);
-    const el = document.getElementById('mTotalProfit');
-    el.textContent = '£' + profit.toFixed(2);
-    el.className = 's-value ' + (profit >= 0 ? 'positive' : 'negative');
-}
+      $('#e-date').value = s.date;
+      $('#e-name').value = s.name;
+      $('#e-proceeds').value = s.proceeds;
+      $('#e-cog').value = s.cog;
+      $('#e-ship').value = s.shipping;
+      $('#e-status').value = s.status;
 
-function goToMonth(key) {
-    // Switch to all sales view and filter to first day of that month range
-    switchView('all');
-    // Filter by month: update filterHistory to support month range
-    const [year, month] = key.split('-');
-    const monthName = new Date(parseInt(year), parseInt(month) - 1, 1)
-        .toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
+      switchEditPlatform(s.platform);
+      $('#modal').setAttribute('data-open', 'true');
+      document.body.style.overflow = 'hidden';
+      setTimeout(() => $('#e-name').focus(), 50);
+    }
 
-    const filtered = salesHistory.filter(s => s.date.slice(0,7) === key);
-    document.getElementById('dateFilter').value = '';
-    document.getElementById('searchInput').value = '';
-    const info = document.getElementById('filterInfo');
-    info.innerHTML = `Showing sales for <strong>${monthName}</strong> — <a href="#" onclick="clearDateFilter();return false;" style="color:var(--accent)">Clear</a>`;
-    info.style.display = 'block';
-    renderHistory(filtered);
-    updateSummary(filtered);
-}
+    function closeEdit() {
+      $('#modal').setAttribute('data-open', 'false');
+      document.body.style.overflow = '';
+      state.ui.editingId = null;
+    }
 
-// ============================================================
-// EDIT MODAL
-// ============================================================
-let editingId = null;
+    function switchEditPlatform(platform) {
+      state.ui.editPlatform = platform;
+      $$('.tabs [data-edit-platform]').forEach((t) =>
+        t.setAttribute('aria-selected', String(t.dataset.editPlatform === platform))
+      );
+      $$('[data-edit-label]').forEach((el) => {
+        el.hidden = el.dataset.editLabel !== platform;
+      });
+      $('#edit-field-shipping').style.display = platform === 'ebay' ? '' : 'none';
+    }
 
-function openEditModal(id) {
-    const sale = salesHistory.find(s => s.id === id);
-    if (!sale) return;
-    editingId = id;
+    function saveEdit() {
+      const id = state.ui.editingId;
+      if (!id) return;
+      const patch = {
+        platform: state.ui.editPlatform,
+        date: $('#e-date').value,
+        name: $('#e-name').value.trim(),
+        proceeds: parseNum($('#e-proceeds').value),
+        cog: parseNum($('#e-cog').value),
+        shipping: parseNum($('#e-ship').value),
+        status: $('#e-status').value === 'refund' ? 'refund' : 'sale',
+      };
+      if (!patch.date || !patch.name || patch.proceeds <= 0) {
+        toast('Fill the required fields', 'error');
+        return;
+      }
+      updateSale(id, patch);
+      closeEdit();
+      toast('Sale updated', 'success');
+    }
 
-    document.getElementById('editDate').value = sale.date.slice(0, 10);
-    document.getElementById('editItemName').value = sale.itemName;
-    document.getElementById('editNetProceeds').value = sale.netProceeds;
-    document.getElementById('editCost').value = sale.cost;
-    document.getElementById('editShipping').value = sale.shipping || 0;
+    /* =========================================================================
+     * TOAST NOTIFICATIONS
+     * ========================================================================= */
+    function toast(message, kind = 'info') {
+      const el = document.createElement('div');
+      el.className = `toast ${kind}`;
+      el.textContent = message;
+      $('#toasts').appendChild(el);
+      setTimeout(() => {
+        el.style.transition = 'opacity 220ms';
+        el.style.opacity = '0';
+        setTimeout(() => el.remove(), 240);
+      }, 2200);
+    }
 
-    updateEditPlatform(sale.platform);
-    document.getElementById('editModal').style.display = 'flex';
-}
+    /* =========================================================================
+     * INIT
+     * ========================================================================= */
+    async function init() {
+      $('#f-date').value = todayISO();
 
-function updateEditPlatform(platform) {
-    document.getElementById('editTabEbay').classList.toggle('active', platform === 'ebay');
-    document.getElementById('editTabVinted').classList.toggle('active', platform === 'vinted');
-    document.getElementById('editShippingGroup').style.display = platform === 'ebay' ? 'block' : 'none';
-    document.getElementById('editPayoutLabel').textContent = platform === 'ebay' ? 'Net Proceeds from eBay (£)' : 'Sale Price (£)';
-    document.getElementById('editModal').dataset.platform = platform;
-}
+      // Calculator platform tabs
+      $$('.tabs [data-platform]').forEach((tab) => {
+        tab.addEventListener('click', () => switchPlatform(tab.dataset.platform));
+      });
 
-function closeEditModal() {
-    document.getElementById('editModal').style.display = 'none';
-    editingId = null;
-}
+      // Live preview bindings
+      ['f-proceeds', 'f-cog', 'f-ship'].forEach((id) => {
+        $('#' + id).addEventListener('input', renderLivePreview);
+      });
 
-function closeEditModalOverlay(e) {
-    if (e.target === document.getElementById('editModal')) closeEditModal();
-}
+      // Form submit / reset
+      $('#calc-form').addEventListener('submit', handleSubmit);
+      $('#btn-reset').addEventListener('click', () => {
+        setTimeout(() => { $('#f-date').value = todayISO(); renderLivePreview(); }, 0);
+      });
 
-function saveEdit() {
-    const sale = salesHistory.find(s => s.id === editingId);
-    if (!sale) return;
+      // History view tabs
+      $$('[data-view]').forEach((tab) => {
+        tab.addEventListener('click', () => {
+          state.ui.view = tab.dataset.view;
+          $$('[data-view]').forEach((t) =>
+            t.setAttribute('aria-selected', String(t.dataset.view === state.ui.view))
+          );
+          renderHistory();
+        });
+      });
 
-    const platform    = document.getElementById('editModal').dataset.platform;
-    const date        = document.getElementById('editDate').value;
-    const itemName    = document.getElementById('editItemName').value.trim();
-    const netProceeds = parseFloat(document.getElementById('editNetProceeds').value) || 0;
-    const cost        = parseFloat(document.getElementById('editCost').value) || 0;
-    const shipping    = platform === 'ebay' ? (parseFloat(document.getElementById('editShipping').value) || 0) : 0;
+      // Filters
+      $('#filter-range').addEventListener('change', (e) => {
+        state.ui.range = e.target.value; renderHistory();
+      });
+      $('#filter-platform').addEventListener('change', (e) => {
+        state.ui.platformFilter = e.target.value; renderHistory();
+      });
+      $('#filter-search').addEventListener('input', (e) => {
+        state.ui.search = e.target.value; renderHistory();
+      });
+      $('#snap-range').addEventListener('change', renderSnapshot);
 
-    if (!date || !itemName) { alert('Please fill in date and item name.'); return; }
+      // Footer actions
+      $('#btn-export').addEventListener('click', exportCSV);
+      $('#btn-clear').addEventListener('click', clearAll);
 
-    const preTaxProfit = netProceeds - cost - shipping;
-    const tax          = preTaxProfit > 0 ? preTaxProfit * 0.20 : 0;
-    const finalProfit  = preTaxProfit - tax;
+      // Modal bindings
+      $('#modal-close').addEventListener('click', closeEdit);
+      $('#modal-cancel').addEventListener('click', closeEdit);
+      $('#modal-save').addEventListener('click', saveEdit);
+      $('#modal').addEventListener('click', (e) => {
+        if (e.target.id === 'modal') closeEdit();
+      });
+      $$('.tabs [data-edit-platform]').forEach((tab) => {
+        tab.addEventListener('click', () => switchEditPlatform(tab.dataset.editPlatform));
+      });
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && $('#modal').getAttribute('data-open') === 'true') closeEdit();
+      });
 
-    sale.platform     = platform;
-    sale.date         = new Date(date + 'T12:00:00').toISOString();
-    sale.itemName     = itemName;
-    sale.netProceeds  = netProceeds;
-    sale.cost         = cost;
-    sale.shipping     = shipping;
-    sale.preTaxProfit = preTaxProfit;
-    sale.tax          = tax;
-    sale.finalProfit  = finalProfit;
+      // Show cached data instantly while cloud loads
+      const local = localStorage.getItem('sales_local');
+      if (local) {
+        try {
+          state.sales = JSON.parse(local).map(normaliseSale);
+          renderAll();
+        } catch (e) { /* corrupt cache — ignore and wait for cloud */ }
+      } else {
+        renderAll();
+      }
 
-    closeEditModal();
-    scheduleSave();
-    filterHistory();
-}
+      // Load remote data
+      setSync('syncing', 'Loading…');
+      try {
+        const data = await api.load();
+        state.sales = (data.sales || []).map(normaliseSale);
+        localStorage.setItem('sales_local', JSON.stringify(state.sales));
+        setSync('ok', 'Synced — data available on all your devices');
+      } catch (err) {
+        console.error(err);
+        setSync('error', local ? 'Offline \u2014 showing cached data' : 'Offline');
+        if (!local) toast('Could not load from cloud. Starting empty.', 'error');
+      }
+      renderAll();
+    }
 
-// ============================================================
-// INIT
-// ============================================================
-(function init() {
-    const today = new Date().toISOString().slice(0,10);
-    document.getElementById('ebayDate').value = today;
-    document.getElementById('vintedDate').value = today;
-    loadData();
-})();
-</script>
+    document.addEventListener('DOMContentLoaded', init);
+  </script>
 </body>
 </html>
