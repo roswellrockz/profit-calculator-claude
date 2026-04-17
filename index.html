@@ -860,7 +860,9 @@
             <option value="week">Last 7 days</option>
             <option value="month">This month</option>
             <option value="year">This year</option>
+            <option value="custom">Custom date…</option>
           </select>
+          <input type="date" id="filter-date" class="select-compact" style="padding-right: 12px; background-image: none; display: none;" aria-label="Specific date" />
           <select id="filter-platform" class="select-compact" aria-label="Platform filter">
             <option value="all">All platforms</option>
             <option value="ebay">eBay only</option>
@@ -997,6 +999,7 @@
         editingId: null,
         editPlatform: 'ebay',
         monthKey: null,
+        specificDate: null,
       },
     };
 
@@ -1170,9 +1173,11 @@
       const p = platform ?? state.ui.platformFilter;
       const q = (search ?? state.ui.search).trim().toLowerCase();
       const mk = state.ui.monthKey;
+      const sd = state.ui.specificDate;
       return state.sales.filter((s) => {
-        if (mk && s.date.slice(0, 7) !== mk) return false;
-        if (!mk && !inRange(s.date, r)) return false;
+        if (sd && s.date !== sd) return false;
+        if (!sd && mk && s.date.slice(0, 7) !== mk) return false;
+        if (!sd && !mk && !inRange(s.date, r)) return false;
         if (p !== 'all' && s.platform !== p) return false;
         if (q && !s.name.toLowerCase().includes(q)) return false;
         return true;
@@ -1634,7 +1639,21 @@
 
       // Filters
       $('#filter-range').addEventListener('change', (e) => {
-        state.ui.range = e.target.value;
+        const val = e.target.value;
+        state.ui.monthKey = null;
+        state.ui.specificDate = null;
+        $('#filter-date').value = '';
+        if (val === 'custom') {
+          $('#filter-date').style.display = '';
+          $('#filter-date').focus();
+        } else {
+          $('#filter-date').style.display = 'none';
+          state.ui.range = val;
+          renderHistory();
+        }
+      });
+      $('#filter-date').addEventListener('change', (e) => {
+        state.ui.specificDate = e.target.value || null;
         state.ui.monthKey = null;
         renderHistory();
       });
