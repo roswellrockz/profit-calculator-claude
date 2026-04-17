@@ -1617,6 +1617,7 @@
       $$('[data-view]').forEach((tab) => {
         tab.addEventListener('click', () => {
           state.ui.view = tab.dataset.view;
+          state.ui.monthKey = null;
           $$('[data-view]').forEach((t) =>
             t.setAttribute('aria-selected', String(t.dataset.view === state.ui.view))
           );
