@@ -990,6 +990,11 @@
      * ========================================================================= */
     const state = {
       sales: [],
+      sync: {
+        loadComplete: false,
+        localDirty: false,
+        changedDuringLoad: false,
+      },
       ui: {
         platform: 'ebay',
         view: 'all',
@@ -1048,6 +1053,21 @@
     const uid = () =>
       `s_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
 
+    const readSyncMeta = () => {
+      try {
+        return JSON.parse(localStorage.getItem('sales_sync_meta') || '{}');
+      } catch (err) {
+        return {};
+      }
+    };
+
+    const writeSyncMeta = (meta) => {
+      localStorage.setItem('sales_sync_meta', JSON.stringify({
+        ...readSyncMeta(),
+        ...meta,
+      }));
+    };
+
     /* =========================================================================
      * DOMAIN MATHS
      * Tax is computed on pre-tax profit (proceeds minus costs), not on revenue.
@@ -1099,13 +1119,19 @@
     };
 
     function scheduleSync() {
+      if (!state.sync.loadComplete) state.sync.changedDuringLoad = true;
+      state.sync.localDirty = true;
       setSync('syncing', 'Saving…');
       // Save locally immediately so data isn't lost if cloud fails
       localStorage.setItem('sales_local', JSON.stringify(state.sales));
+      writeSyncMeta({ dirty: true, updatedAt: new Date().toISOString() });
       clearTimeout(saveTimer);
       saveTimer = setTimeout(async () => {
         try {
           await api.save({ schema: CONFIG.SCHEMA_VERSION, sales: state.sales });
+          state.sync.localDirty = false;
+          state.sync.changedDuringLoad = false;
+          writeSyncMeta({ dirty: false, syncedAt: new Date().toISOString() });
           setSync('ok', 'Synced');
         } catch (err) {
           console.error(err);
@@ -1282,6 +1308,9 @@
       $$('[data-action="delete"]', body).forEach((btn) =>
         btn.addEventListener('click', () => deleteSale(btn.dataset.id))
       );
+      $$('[data-action="month"]', body).forEach((row) =>
+        row.addEventListener('click', () => goToMonth(row.dataset.month))
+      );
     }
 
     function renderAllTable(list) {
@@ -1355,7 +1384,7 @@
         const monthLabel = new Date(Number(y), Number(m) - 1, 1)
           .toLocaleString('en-GB', { month: 'long', year: 'numeric' });
         return `
-          <tr style="cursor: pointer;" onclick="goToMonth('${key}')" title="Click to view ${monthLabel} sales">
+          <tr style="cursor: pointer;" data-action="month" data-month="${esc(key)}" title="${esc(`Click to view ${monthLabel} sales`)}">
             <td><strong>${esc(monthLabel)}</strong></td>
             <td class="num">${agg.sales}</td>
             <td class="num">${agg.refunds}</td>
@@ -1445,6 +1474,7 @@
     function goToMonth(key) {
       state.ui.view = 'all';
       state.ui.monthKey = key;
+      state.ui.specificDate = null;
       $$('[data-view]').forEach((t) =>
         t.setAttribute('aria-selected', String(t.dataset.view === 'all'))
       );
@@ -1452,6 +1482,8 @@
       state.ui.platformFilter = 'all';
       state.ui.search = '';
       $('#filter-range').value = 'all';
+      $('#filter-date').value = '';
+      $('#filter-date').style.display = 'none';
       $('#filter-platform').value = 'all';
       $('#filter-search').value = '';
       renderHistory();
@@ -1640,15 +1672,16 @@
       // Filters
       $('#filter-range').addEventListener('change', (e) => {
         const val = e.target.value;
+        state.ui.range = val;
         state.ui.monthKey = null;
         state.ui.specificDate = null;
         $('#filter-date').value = '';
         if (val === 'custom') {
           $('#filter-date').style.display = '';
           $('#filter-date').focus();
+          renderHistory();
         } else {
           $('#filter-date').style.display = 'none';
-          state.ui.range = val;
           renderHistory();
         }
       });
@@ -1685,6 +1718,8 @@
 
       // Show cached data instantly while cloud loads
       const local = localStorage.getItem('sales_local');
+      const syncMeta = readSyncMeta();
+      state.sync.localDirty = syncMeta.dirty === true;
       if (local) {
         try {
           state.sales = JSON.parse(local).map(normaliseSale);
@@ -1698,14 +1733,21 @@
       setSync('syncing', 'Loading…');
       try {
         const data = await api.load();
-        state.sales = (data.sales || []).map(normaliseSale);
-        localStorage.setItem('sales_local', JSON.stringify(state.sales));
-        setSync('ok', 'Synced');
+        if (state.sync.localDirty || state.sync.changedDuringLoad) {
+          setSync('syncing', 'Saving local changes…');
+          scheduleSync();
+        } else {
+          state.sales = (data.sales || []).map(normaliseSale);
+          localStorage.setItem('sales_local', JSON.stringify(state.sales));
+          writeSyncMeta({ dirty: false, syncedAt: new Date().toISOString() });
+          setSync('ok', 'Synced');
+        }
       } catch (err) {
         console.error(err);
         setSync('error', 'Offline');
         if (!local) toast('Could not load from cloud. Starting empty.', 'error');
       }
+      state.sync.loadComplete = true;
       renderAll();
     }
 
