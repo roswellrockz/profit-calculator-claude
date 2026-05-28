@@ -906,7 +906,7 @@
       JSONBIN_BASE:   'https://api.jsonbin.io/v3/b',
       TAX_RATE:       0.20,
       DEBOUNCE_MS:    800,
-      SCHEMA_VERSION: 2,
+      SCHEMA_VERSION: 3,
     });
 
     /* =========================================================================
@@ -1009,6 +1009,40 @@
     }
 
     /* =========================================================================
+     * COMPRESSION HELPERS — keeps cloud payload under JSONbin's 100KB free limit.
+     * Uses the browser's native CompressionStream API (no libraries).
+     * ========================================================================= */
+    function bytesToBase64(bytes) {
+      let binary = '';
+      const chunk = 0x8000;
+      for (let i = 0; i < bytes.length; i += chunk) {
+        binary += String.fromCharCode.apply(null, bytes.subarray(i, i + chunk));
+      }
+      return btoa(binary);
+    }
+
+    function base64ToBytes(str) {
+      const bin = atob(str);
+      const bytes = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+      return bytes;
+    }
+
+    async function gzipBase64(obj) {
+      const json = JSON.stringify(obj);
+      const stream = new Blob([json]).stream().pipeThrough(new CompressionStream('gzip'));
+      const buf = await new Response(stream).arrayBuffer();
+      return bytesToBase64(new Uint8Array(buf));
+    }
+
+    async function gunzipBase64(str) {
+      const bytes = base64ToBytes(str);
+      const stream = new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip'));
+      const text = await new Response(stream).text();
+      return JSON.parse(text);
+    }
+
+    /* =========================================================================
      * REMOTE SYNC (JSONBin)
      * ========================================================================= */
     const api = {
@@ -1022,20 +1056,38 @@
         });
         if (!res.ok) throw new Error(`Load failed: ${res.status}`);
         const data = await res.json();
+
+        // New compressed format (schema 3+): { schema, compressed: "<base64 gzip>" }
+        if (data && typeof data.compressed === 'string') {
+          try {
+            const unpacked = await gunzipBase64(data.compressed);
+            if (Array.isArray(unpacked)) return { sales: unpacked, schema: data.schema };
+            if (unpacked && Array.isArray(unpacked.sales)) return unpacked;
+          } catch (e) {
+            console.error('Decompress failed', e);
+          }
+          return { sales: [], schema: CONFIG.SCHEMA_VERSION };
+        }
+
+        // Legacy formats
         if (Array.isArray(data)) return { sales: data, schema: 1 };
         if (data && Array.isArray(data.sales)) return data;
+
+        // Bin contains something unexpected (e.g. {test:true}) — treat as empty
         return { sales: [], schema: CONFIG.SCHEMA_VERSION };
       },
 
       async save(payload) {
         const url = `${CONFIG.JSONBIN_BASE}/${CONFIG.JSONBIN_BIN_ID}`;
+        const compressed = await gzipBase64(payload.sales || []);
+        const body = JSON.stringify({ schema: CONFIG.SCHEMA_VERSION, compressed });
         const res = await fetch(url, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
             'X-Master-Key': CONFIG.JSONBIN_KEY,
           },
-          body: JSON.stringify(payload),
+          body,
         });
         if (!res.ok) throw new Error(`Save failed: ${res.status}`);
         return res.json();
@@ -1657,11 +1709,22 @@
       setSync('syncing', 'Loading…');
       try {
         const data = await api.load();
+        const remote = (data.sales || []).map(normaliseSale);
         if (state.sync.localDirty || state.sync.changedDuringLoad) {
+          // Merge: local unsaved changes win per-ID, but keep any remote-only entries
+          const localMap = new Map(state.sales.map(s => [s.id, s]));
+          const merged = [...remote];
+          for (let i = 0; i < merged.length; i++) {
+            if (localMap.has(merged[i].id)) merged[i] = localMap.get(merged[i].id);
+          }
+          for (const [id, s] of localMap) {
+            if (!merged.find(r => r.id === id)) merged.push(s);
+          }
+          state.sales = merged;
           setSync('syncing', 'Saving local changes…');
           scheduleSync();
         } else {
-          state.sales = (data.sales || []).map(normaliseSale);
+          state.sales = remote;
           localStorage.setItem('sales_local', JSON.stringify(state.sales));
           writeSyncMeta({ dirty: false, syncedAt: new Date().toISOString() });
           setSync('ok', 'Synced');
