@@ -1057,6 +1057,57 @@
     </div>
   </div>
 
+  <!-- ===================== EXPENSE EDIT MODAL ===================== -->
+  <div class="modal-backdrop" id="exp-modal" role="dialog" aria-modal="true" aria-labelledby="exp-modal-title">
+    <div class="modal">
+      <header class="modal-header">
+        <h3 class="modal-title" id="exp-modal-title">Edit expense</h3>
+        <button class="modal-close" id="exp-modal-close" aria-label="Close" type="button">
+          <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
+            <path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+          </svg>
+        </button>
+      </header>
+      <div class="modal-body">
+        <form id="exp-edit-form" autocomplete="off">
+          <div class="form-grid">
+            <div class="field">
+              <label for="ex-date">Date</label>
+              <input type="date" id="ex-date" required />
+            </div>
+            <div class="field">
+              <label for="ex-cat">Category</label>
+              <select id="ex-cat">
+                <option value="storefee">Store fee</option>
+                <option value="supplies">Supplies</option>
+                <option value="postage">Postage &amp; packaging</option>
+                <option value="parts">Parts &amp; accessories</option>
+                <option value="mileage">Mileage / sourcing</option>
+                <option value="subscription">Subscriptions</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+            <div class="field full">
+              <label for="ex-desc">Description</label>
+              <input type="text" id="ex-desc" maxlength="120" required />
+            </div>
+            <div class="field">
+              <label for="ex-amount">Amount</label>
+              <div class="input-wrap currency">
+                <span class="prefix">£</span>
+                <input type="number" id="ex-amount" min="0" step="0.01" inputmode="decimal" required />
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+      <footer class="modal-footer">
+        <button class="btn btn-ghost" id="exp-modal-cancel" type="button">Cancel</button>
+        <button class="btn btn-primary" id="exp-modal-save" type="button">Save changes</button>
+      </footer>
+    </div>
+  </div>
+
   <div class="toast-stack" id="toasts" aria-live="polite" aria-atomic="true"></div>
 
   <script>
@@ -1098,6 +1149,7 @@
         section: 'sales',
         expRange: 'all',
         expCat: 'all',
+        editingExpenseId: null,
       },
     };
 
@@ -1740,6 +1792,9 @@
           <td class="num neg">${fmtSignedGBP(x.amount, { subtract: true })}</td>
           <td>
             <div class="row-actions">
+              <button class="icon-btn" data-action="edit-exp" data-id="${x.id}" title="Edit" aria-label="Edit expense">
+                <svg viewBox="0 0 16 16"><path d="M11 2l3 3-8 8H3v-3l8-8z" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linejoin="round"/></svg>
+              </button>
               <button class="icon-btn danger" data-action="del-exp" data-id="${x.id}" title="Delete" aria-label="Delete expense">
                 <svg viewBox="0 0 16 16"><path d="M3 4h10M6 4V2h4v2M4 4l1 10h6l1-10" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
               </button>
@@ -1766,6 +1821,9 @@
 
       $$('[data-action="del-exp"]', body).forEach((btn) =>
         btn.addEventListener('click', () => deleteExpense(btn.dataset.id))
+      );
+      $$('[data-action="edit-exp"]', body).forEach((btn) =>
+        btn.addEventListener('click', () => openExpenseEdit(btn.dataset.id))
       );
     }
 
@@ -1834,6 +1892,52 @@
       $('#x-desc').value = '';
       $('#x-amount').value = '';
       $('#x-desc').focus();
+    }
+
+    /* =========================================================================
+     * EXPENSES — edit modal
+     * ========================================================================= */
+    function openExpenseEdit(id) {
+      const x = state.expenses.find((e) => e.id === id);
+      if (!x) return;
+      state.ui.editingExpenseId = id;
+
+      $('#ex-date').value = x.date;
+      $('#ex-cat').value = EXP_CATS[x.category] ? x.category : 'other';
+      $('#ex-desc').value = x.desc;
+      $('#ex-amount').value = x.amount;
+
+      $('#exp-modal').setAttribute('data-open', 'true');
+      document.body.style.overflow = 'hidden';
+      setTimeout(() => $('#ex-desc').focus(), 50);
+    }
+
+    function closeExpenseEdit() {
+      $('#exp-modal').setAttribute('data-open', 'false');
+      document.body.style.overflow = '';
+      state.ui.editingExpenseId = null;
+    }
+
+    function saveExpenseEdit() {
+      const id = state.ui.editingExpenseId;
+      if (!id) return;
+      const i = state.expenses.findIndex((e) => e.id === id);
+      if (i === -1) return;
+
+      const date = $('#ex-date').value;
+      const desc = $('#ex-desc').value.trim();
+      const category = EXP_CATS[$('#ex-cat').value] ? $('#ex-cat').value : 'other';
+      const amount = parseNum($('#ex-amount').value);
+
+      if (!date) { toast('Pick a date', 'error'); return; }
+      if (!desc) { toast('Describe the expense', 'error'); return; }
+      if (amount <= 0) { toast('Enter an amount', 'error'); return; }
+
+      state.expenses[i] = { ...state.expenses[i], date, desc, category, amount };
+      renderExpenses();
+      scheduleSync();
+      closeExpenseEdit();
+      toast('Expense updated', 'success');
     }
 
     /* =========================================================================
@@ -2060,6 +2164,18 @@
       });
       document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape' && $('#modal').getAttribute('data-open') === 'true') closeEdit();
+      });
+
+      // Expense edit modal bindings
+      $('#exp-modal-close').addEventListener('click', closeExpenseEdit);
+      $('#exp-modal-cancel').addEventListener('click', closeExpenseEdit);
+      $('#exp-modal-save').addEventListener('click', saveExpenseEdit);
+      $('#exp-modal').addEventListener('click', (e) => {
+        if (e.target.id === 'exp-modal') closeExpenseEdit();
+      });
+      $('#exp-edit-form').addEventListener('submit', (e) => { e.preventDefault(); saveExpenseEdit(); });
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && $('#exp-modal').getAttribute('data-open') === 'true') closeExpenseEdit();
       });
 
       // Show cached data instantly while cloud loads
