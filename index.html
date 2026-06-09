@@ -1945,6 +1945,7 @@
      * ========================================================================= */
     function switchSection(name) {
       state.ui.section = name;
+      localStorage.setItem('active_section', name);
       $$('.main-tabs [data-section]').forEach((t) =>
         t.setAttribute('aria-selected', String(t.dataset.section === name))
       );
@@ -2072,6 +2073,10 @@
     async function init() {
       $('#f-date').value = todayISO();
       $('#x-date').value = todayISO();
+
+      // Restore last active tab
+      const savedSection = localStorage.getItem('active_section');
+      if (savedSection === 'expenses') switchSection('expenses');
 
       // Section tabs (Sales ↔ Expenses)
       $$('.main-tabs [data-section]').forEach((tab) => {
