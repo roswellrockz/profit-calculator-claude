@@ -1178,6 +1178,7 @@
         expCat: 'all',
         editingExpenseId: null,
         editingNoteId: null,
+        noteKind: 'sale',
       },
     };
 
@@ -1421,6 +1422,7 @@
         desc:      String(raw.desc || raw.description || 'Untitled').slice(0, 160),
         category:  EXP_CATS[raw.category] ? raw.category : 'other',
         amount:    parseNum(raw.amount),
+        note:      String(raw.note || '').slice(0, 500),
         createdAt: raw.createdAt || new Date().toISOString(),
       };
     }
@@ -1832,6 +1834,11 @@
               <button class="icon-btn" data-action="edit-exp" data-id="${x.id}" title="Edit" aria-label="Edit expense">
                 <svg viewBox="0 0 16 16"><path d="M11 2l3 3-8 8H3v-3l8-8z" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linejoin="round"/></svg>
               </button>
+              <button class="icon-btn ${x.note ? 'has-note' : ''}" data-action="note-exp" data-id="${x.id}" title="${x.note ? 'Edit comment' : 'Add comment'}" aria-label="Comment">
+                ${x.note
+                  ? '<svg viewBox="0 0 16 16"><path d="M2 3.5A1.5 1.5 0 013.5 2h9A1.5 1.5 0 0114 3.5v6A1.5 1.5 0 0112.5 11H6l-3 3v-3H3.5A1.5 1.5 0 012 9.5v-6z" fill="currentColor"/></svg>'
+                  : '<svg viewBox="0 0 16 16"><path d="M2 3.5A1.5 1.5 0 013.5 2h9A1.5 1.5 0 0114 3.5v6A1.5 1.5 0 0112.5 11H6l-3 3v-3H3.5A1.5 1.5 0 012 9.5v-6z" stroke="currentColor" stroke-width="1.4" fill="none" stroke-linejoin="round"/></svg>'}
+              </button>
               <button class="icon-btn danger" data-action="del-exp" data-id="${x.id}" title="Delete" aria-label="Delete expense">
                 <svg viewBox="0 0 16 16"><path d="M3 4h10M6 4V2h4v2M4 4l1 10h6l1-10" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
               </button>
@@ -1861,6 +1868,9 @@
       );
       $$('[data-action="edit-exp"]', body).forEach((btn) =>
         btn.addEventListener('click', () => openExpenseEdit(btn.dataset.id))
+      );
+      $$('[data-action="note-exp"]', body).forEach((btn) =>
+        btn.addEventListener('click', () => openExpenseNote(btn.dataset.id))
       );
     }
 
@@ -1978,14 +1988,27 @@
     }
 
     /* =========================================================================
-     * SALES — comment modal
+     * COMMENT MODAL — shared by sales + expenses
      * ========================================================================= */
     function openNote(id) {
       const s = state.sales.find((x) => x.id === id);
       if (!s) return;
       state.ui.editingNoteId = id;
+      state.ui.noteKind = 'sale';
       $('#note-subject').textContent = `Note for "${s.name}"`;
       $('#note-text').value = s.note || '';
+      $('#note-modal').setAttribute('data-open', 'true');
+      document.body.style.overflow = 'hidden';
+      setTimeout(() => $('#note-text').focus(), 50);
+    }
+
+    function openExpenseNote(id) {
+      const x = state.expenses.find((e) => e.id === id);
+      if (!x) return;
+      state.ui.editingNoteId = id;
+      state.ui.noteKind = 'expense';
+      $('#note-subject').textContent = `Note for "${x.desc}"`;
+      $('#note-text').value = x.note || '';
       $('#note-modal').setAttribute('data-open', 'true');
       document.body.style.overflow = 'hidden';
       setTimeout(() => $('#note-text').focus(), 50);
@@ -2000,13 +2023,15 @@
     function saveNote() {
       const id = state.ui.editingNoteId;
       if (!id) return;
-      const s = state.sales.find((x) => x.id === id);
-      if (!s) return;
-      s.note = $('#note-text').value.trim().slice(0, 500);
-      renderHistory();
+      const list = state.ui.noteKind === 'expense' ? state.expenses : state.sales;
+      const item = list.find((x) => x.id === id);
+      if (!item) return;
+      item.note = $('#note-text').value.trim().slice(0, 500);
+      if (state.ui.noteKind === 'expense') renderExpenses();
+      else renderHistory();
       scheduleSync();
       closeNote();
-      toast(s.note ? 'Comment saved' : 'Comment cleared', 'success');
+      toast(item.note ? 'Comment saved' : 'Comment cleared', 'success');
     }
 
     /* =========================================================================
