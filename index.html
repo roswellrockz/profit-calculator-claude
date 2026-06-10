@@ -256,7 +256,7 @@
       font-family: var(--font-mono); font-size: 13px;
       color: var(--ink-3); pointer-events: none;
     }
-    .field input, .field select {
+    .field input, .field select, .field textarea {
       width: 100%;
       padding: 10px 12px;
       border: 1.5px solid var(--border);
@@ -266,15 +266,16 @@
       font-size: 14px;
       transition: border-color var(--dur-1) var(--ease), box-shadow var(--dur-1) var(--ease);
     }
+    .field textarea { resize: vertical; min-height: 84px; font-family: inherit; line-height: 1.5; }
     .field input[type="number"] { font-family: var(--font-mono); }
     .input-wrap.currency input { padding-left: 26px; }
-    .field input:hover, .field select:hover { border-color: var(--border-strong); }
-    .field input:focus, .field select:focus {
+    .field input:hover, .field select:hover, .field textarea:hover { border-color: var(--border-strong); }
+    .field input:focus, .field select:focus, .field textarea:focus {
       outline: none;
       border-color: var(--accent);
       box-shadow: 0 0 0 3px var(--accent-ring);
     }
-    .field input::placeholder { color: var(--ink-4); }
+    .field input::placeholder, .field textarea::placeholder { color: var(--ink-4); }
 
     .breakdown {
       margin-top: 20px;
@@ -521,6 +522,8 @@
     }
     .icon-btn:hover { color: var(--ink-2); background: var(--bg); }
     .icon-btn.danger:hover { color: var(--neg); background: var(--neg-soft); }
+    .icon-btn.has-note { color: var(--accent); }
+    .icon-btn.has-note:hover { color: var(--accent-hover); background: var(--accent-soft); }
     .icon-btn svg { width: 14px; height: 14px; }
 
     .table-footer {
@@ -1108,6 +1111,30 @@
     </div>
   </div>
 
+  <!-- ===================== COMMENT MODAL ===================== -->
+  <div class="modal-backdrop" id="note-modal" role="dialog" aria-modal="true" aria-labelledby="note-modal-title">
+    <div class="modal">
+      <header class="modal-header">
+        <h3 class="modal-title" id="note-modal-title">Comment</h3>
+        <button class="modal-close" id="note-modal-close" aria-label="Close" type="button">
+          <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
+            <path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+          </svg>
+        </button>
+      </header>
+      <div class="modal-body">
+        <div class="field full">
+          <label for="note-text" id="note-subject">Note for this sale</label>
+          <textarea id="note-text" maxlength="500" rows="4" placeholder="e.g. Transferred to personal account on 10 Jun"></textarea>
+        </div>
+      </div>
+      <footer class="modal-footer">
+        <button class="btn btn-ghost" id="note-modal-cancel" type="button">Cancel</button>
+        <button class="btn btn-primary" id="note-modal-save" type="button">Save comment</button>
+      </footer>
+    </div>
+  </div>
+
   <div class="toast-stack" id="toasts" aria-live="polite" aria-atomic="true"></div>
 
   <script>
@@ -1150,6 +1177,7 @@
         expRange: 'all',
         expCat: 'all',
         editingExpenseId: null,
+        editingNoteId: null,
       },
     };
 
@@ -1367,6 +1395,7 @@
         date:      (raw.date || '').slice(0, 10) || todayISO(),
         name:      String(raw.name || raw.itemName || raw.item || 'Untitled').slice(0, 160),
         status:    (raw.status === 'refund' || raw.refunded === true) ? 'refund' : 'sale',
+        note:      String(raw.note || '').slice(0, 500),
         createdAt: raw.createdAt || new Date().toISOString(),
         ...base,
       };
@@ -1535,6 +1564,9 @@
       $$('[data-action="delete"]', body).forEach((btn) =>
         btn.addEventListener('click', () => deleteSale(btn.dataset.id))
       );
+      $$('[data-action="note"]', body).forEach((btn) =>
+        btn.addEventListener('click', () => openNote(btn.dataset.id))
+      );
       $$('[data-action="month"]', body).forEach((row) =>
         row.addEventListener('click', () => goToMonth(row.dataset.month))
       );
@@ -1562,6 +1594,11 @@
               </button>
               <button class="icon-btn" data-action="edit" data-id="${s.id}" title="Edit" aria-label="Edit sale">
                 <svg viewBox="0 0 16 16"><path d="M11 2l3 3-8 8H3v-3l8-8z" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linejoin="round"/></svg>
+              </button>
+              <button class="icon-btn ${s.note ? 'has-note' : ''}" data-action="note" data-id="${s.id}" title="${s.note ? 'Edit comment' : 'Add comment'}" aria-label="Comment">
+                ${s.note
+                  ? '<svg viewBox="0 0 16 16"><path d="M2 3.5A1.5 1.5 0 013.5 2h9A1.5 1.5 0 0114 3.5v6A1.5 1.5 0 0112.5 11H6l-3 3v-3H3.5A1.5 1.5 0 012 9.5v-6z" fill="currentColor"/></svg>'
+                  : '<svg viewBox="0 0 16 16"><path d="M2 3.5A1.5 1.5 0 013.5 2h9A1.5 1.5 0 0114 3.5v6A1.5 1.5 0 0112.5 11H6l-3 3v-3H3.5A1.5 1.5 0 012 9.5v-6z" stroke="currentColor" stroke-width="1.4" fill="none" stroke-linejoin="round"/></svg>'}
               </button>
               <button class="icon-btn danger" data-action="delete" data-id="${s.id}" title="Delete" aria-label="Delete sale">
                 <svg viewBox="0 0 16 16"><path d="M3 4h10M6 4V2h4v2M4 4l1 10h6l1-10" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -1941,6 +1978,38 @@
     }
 
     /* =========================================================================
+     * SALES — comment modal
+     * ========================================================================= */
+    function openNote(id) {
+      const s = state.sales.find((x) => x.id === id);
+      if (!s) return;
+      state.ui.editingNoteId = id;
+      $('#note-subject').textContent = `Note for "${s.name}"`;
+      $('#note-text').value = s.note || '';
+      $('#note-modal').setAttribute('data-open', 'true');
+      document.body.style.overflow = 'hidden';
+      setTimeout(() => $('#note-text').focus(), 50);
+    }
+
+    function closeNote() {
+      $('#note-modal').setAttribute('data-open', 'false');
+      document.body.style.overflow = '';
+      state.ui.editingNoteId = null;
+    }
+
+    function saveNote() {
+      const id = state.ui.editingNoteId;
+      if (!id) return;
+      const s = state.sales.find((x) => x.id === id);
+      if (!s) return;
+      s.note = $('#note-text').value.trim().slice(0, 500);
+      renderHistory();
+      scheduleSync();
+      closeNote();
+      toast(s.note ? 'Comment saved' : 'Comment cleared', 'success');
+    }
+
+    /* =========================================================================
      * SECTION TOGGLE — Sales ↔ Expenses
      * ========================================================================= */
     function switchSection(name) {
@@ -2181,6 +2250,17 @@
       $('#exp-edit-form').addEventListener('submit', (e) => { e.preventDefault(); saveExpenseEdit(); });
       document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape' && $('#exp-modal').getAttribute('data-open') === 'true') closeExpenseEdit();
+      });
+
+      // Comment modal bindings
+      $('#note-modal-close').addEventListener('click', closeNote);
+      $('#note-modal-cancel').addEventListener('click', closeNote);
+      $('#note-modal-save').addEventListener('click', saveNote);
+      $('#note-modal').addEventListener('click', (e) => {
+        if (e.target.id === 'note-modal') closeNote();
+      });
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && $('#note-modal').getAttribute('data-open') === 'true') closeNote();
       });
 
       // Show cached data instantly while cloud loads
