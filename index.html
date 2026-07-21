@@ -979,6 +979,16 @@
               <option value="other">Other</option>
             </select>
           </div>
+          <div class="right">
+            <input
+              type="search"
+              id="x-filter-search"
+              placeholder="Search expenses…"
+              class="select-compact"
+              style="padding-right: 12px; background-image: none; min-width: 180px;"
+              aria-label="Search expenses"
+            />
+          </div>
         </div>
 
         <div id="expenses-body"></div>
@@ -1176,6 +1186,7 @@
         section: 'sales',
         expRange: 'all',
         expCat: 'all',
+        expSearch: '',
         editingExpenseId: null,
         editingNoteId: null,
         noteKind: 'sale',
@@ -1793,9 +1804,11 @@
     const sumExpenses = (list) => list.reduce((t, x) => t + x.amount, 0);
 
     function filterExpenses() {
+      const q = state.ui.expSearch.trim().toLowerCase();
       return state.expenses.filter((x) =>
         inRange(x.date, state.ui.expRange) &&
-        (state.ui.expCat === 'all' || x.category === state.ui.expCat)
+        (state.ui.expCat === 'all' || x.category === state.ui.expCat) &&
+        (q === '' || (x.desc || '').toLowerCase().includes(q))
       );
     }
 
@@ -2187,6 +2200,9 @@
       });
       $('#x-filter-cat').addEventListener('change', (e) => {
         state.ui.expCat = e.target.value; renderExpenses();
+      });
+      $('#x-filter-search').addEventListener('input', (e) => {
+        state.ui.expSearch = e.target.value; renderExpenses();
       });
       $('#x-export').addEventListener('click', exportExpensesCSV);
 
