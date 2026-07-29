@@ -1612,6 +1612,7 @@
     }
 
     const SORT_FIELDS = {
+      date: 'date',
       cog: 'cog',
       payout: 'proceeds',
       ship: 'shipping',
@@ -1633,9 +1634,12 @@
       let sorted;
       if (sortCol && SORT_FIELDS[sortCol]) {
         const field = SORT_FIELDS[sortCol];
-        sorted = [...list].sort((a, b) =>
-          sortDir === 'asc' ? a[field] - b[field] : b[field] - a[field]
-        );
+        sorted = [...list].sort((a, b) => {
+          const diff = field === 'date'
+            ? (a[field] < b[field] ? -1 : a[field] > b[field] ? 1 : 0)
+            : a[field] - b[field];
+          return sortDir === 'asc' ? diff : -diff;
+        });
       } else {
         sorted = [...list].sort((a, b) => (a.date < b.date ? 1 : -1));
       }
@@ -1678,7 +1682,7 @@
           <table class="sales">
             <thead>
               <tr>
-                <th>Date</th>
+                <th class="sortable" data-sort="date">Date${sortIcon('date')}</th>
                 <th>Item</th>
                 <th>Platform</th>
                 <th>Status</th>
