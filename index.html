@@ -503,6 +503,14 @@
       max-width: 280px; overflow: hidden; text-overflow: ellipsis;
       white-space: nowrap; font-weight: 500; color: var(--ink);
     }
+    table.sales th.sortable { cursor: pointer; user-select: none; }
+    table.sales th.sortable:hover { color: var(--accent); }
+    table.sales th.sortable .arrows {
+      display: inline-flex; flex-direction: column; margin-left: 4px;
+      vertical-align: middle; gap: 1px;
+    }
+    table.sales th.sortable .arrows svg { width: 8px; height: 8px; display: block; fill: var(--ink-4); }
+    table.sales th.sortable .arrows svg.active { fill: var(--accent); }
 
     .pill {
       display: inline-flex; align-items: center; gap: 4px;
@@ -1190,6 +1198,8 @@
         editingExpenseId: null,
         editingNoteId: null,
         noteKind: 'sale',
+        sortCol: null,
+        sortDir: 'desc',
       },
     };
 
@@ -1583,10 +1593,52 @@
       $$('[data-action="month"]', body).forEach((row) =>
         row.addEventListener('click', () => goToMonth(row.dataset.month))
       );
+      $$('th[data-sort]', body).forEach((th) =>
+        th.addEventListener('click', () => setSort(th.dataset.sort))
+      );
+    }
+
+    function setSort(col) {
+      if (state.ui.sortCol !== col) {
+        state.ui.sortCol = col;
+        state.ui.sortDir = 'desc';
+      } else if (state.ui.sortDir === 'desc') {
+        state.ui.sortDir = 'asc';
+      } else {
+        state.ui.sortCol = null;
+        state.ui.sortDir = 'desc';
+      }
+      renderHistory();
+    }
+
+    const SORT_FIELDS = {
+      cog: 'cog',
+      payout: 'proceeds',
+      ship: 'shipping',
+      tax: 'tax',
+      profit: 'profit',
+    };
+
+    function sortIcon(col) {
+      const active = state.ui.sortCol === col;
+      const dir = active ? state.ui.sortDir : null;
+      return `<span class="arrows">
+        <svg class="up${dir === 'asc' ? ' active' : ''}" viewBox="0 0 10 6"><path d="M5 0L10 6H0Z"/></svg>
+        <svg class="down${dir === 'desc' ? ' active' : ''}" viewBox="0 0 10 6"><path d="M5 6L0 0H10Z"/></svg>
+      </span>`;
     }
 
     function renderAllTable(list) {
-      const sorted = [...list].sort((a, b) => (a.date < b.date ? 1 : -1));
+      const { sortCol, sortDir } = state.ui;
+      let sorted;
+      if (sortCol && SORT_FIELDS[sortCol]) {
+        const field = SORT_FIELDS[sortCol];
+        sorted = [...list].sort((a, b) =>
+          sortDir === 'asc' ? a[field] - b[field] : b[field] - a[field]
+        );
+      } else {
+        sorted = [...list].sort((a, b) => (a.date < b.date ? 1 : -1));
+      }
       const rows = sorted.map((s) => `
         <tr>
           <td>${esc(s.date)}</td>
@@ -1630,11 +1682,11 @@
                 <th>Item</th>
                 <th>Platform</th>
                 <th>Status</th>
-                <th class="num">COG</th>
-                <th class="num">Payout</th>
-                <th class="num">Ship</th>
-                <th class="num">Tax</th>
-                <th class="num">Profit</th>
+                <th class="num sortable" data-sort="cog">COG${sortIcon('cog')}</th>
+                <th class="num sortable" data-sort="payout">Payout${sortIcon('payout')}</th>
+                <th class="num sortable" data-sort="ship">Ship${sortIcon('ship')}</th>
+                <th class="num sortable" data-sort="tax">Tax${sortIcon('tax')}</th>
+                <th class="num sortable" data-sort="profit">Profit${sortIcon('profit')}</th>
                 <th><span class="sr-only">Actions</span></th>
               </tr>
             </thead>
