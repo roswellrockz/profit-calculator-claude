@@ -786,15 +786,6 @@
                 <input type="number" id="f-ship" min="0" step="0.01" inputmode="decimal" placeholder="0.00" />
               </div>
             </div>
-
-            <div class="field">
-              <label for="f-pack-item">Packing used</label>
-              <select id="f-pack-item"></select>
-            </div>
-            <div class="field">
-              <label for="f-pack-qty">Qty used</label>
-              <input type="number" id="f-pack-qty" min="1" step="1" value="1" />
-            </div>
           </div>
 
           <!-- Live breakdown -->
@@ -1164,14 +1155,6 @@
                 <span class="prefix">£</span>
                 <input type="number" id="e-ship" min="0" step="0.01" />
               </div>
-            </div>
-            <div class="field">
-              <label for="e-pack-item">Packing used</label>
-              <select id="e-pack-item"></select>
-            </div>
-            <div class="field">
-              <label for="e-pack-qty">Qty used</label>
-              <input type="number" id="e-pack-qty" min="1" step="1" value="1" />
             </div>
             <div class="field full">
               <label for="e-status">Status</label>
@@ -1580,8 +1563,6 @@
         name:      String(raw.name || raw.itemName || raw.item || 'Untitled').slice(0, 160),
         status:    (raw.status === 'refund' || raw.refunded === true) ? 'refund' : 'sale',
         note:      String(raw.note || '').slice(0, 500),
-        packItemId: raw.packItemId || null,
-        packQty:   Math.max(0, Math.round(parseNum(raw.packQty))),
         createdAt: raw.createdAt || new Date().toISOString(),
         ...base,
       };
@@ -1708,35 +1689,6 @@
       renderHistory();
       renderExpenses();
       renderStock();
-    }
-
-    function packingOptionsHTML(selectedId) {
-      const opts = ['<option value="">— None —</option>'];
-      const sorted = [...state.stock].sort((a, b) =>
-        (STOCK_CATS[a.category] || '').localeCompare(STOCK_CATS[b.category] || '') ||
-        a.label.localeCompare(b.label)
-      );
-      for (const it of sorted) {
-        const low = it.qty <= it.threshold;
-        const label = `${STOCK_CATS[it.category] || 'Item'} — ${it.label} (${it.qty} left)${low ? ' ⚠' : ''}`;
-        opts.push(`<option value="${esc(it.id)}"${it.id === selectedId ? ' selected' : ''}>${esc(label)}</option>`);
-      }
-      return opts.join('');
-    }
-
-    function renderPackingSelects() {
-      const fSel = $('#f-pack-item');
-      if (fSel) {
-        const cur = fSel.value;
-        fSel.innerHTML = packingOptionsHTML(cur);
-        fSel.value = cur;
-      }
-      const eSel = $('#e-pack-item');
-      if (eSel) {
-        const cur = eSel.value;
-        eSel.innerHTML = packingOptionsHTML(cur);
-        eSel.value = cur;
-      }
     }
 
     function renderLivePreview() {
@@ -1978,14 +1930,7 @@
     /* =========================================================================
      * ACTIONS
      * ========================================================================= */
-    function adjustStockForSale(sale, sign) {
-      if (!sale.packItemId || !sale.packQty) return;
-      const item = state.stock.find((x) => x.id === sale.packItemId);
-      if (!item) return;
-      item.qty = Math.max(0, item.qty + sign * sale.packQty);
-    }
-
-    function addSale({ platform, date, name, proceeds, cog, shipping, packItemId, packQty }) {
+    function addSale({ platform, date, name, proceeds, cog, shipping }) {
       const calc = computeSale({ platform, proceeds, cog, shipping });
       const sale = {
         id: uid(),
@@ -1994,12 +1939,9 @@
         name: name.trim(),
         status: 'sale',
         createdAt: new Date().toISOString(),
-        packItemId: packItemId || null,
-        packQty: packItemId ? packQty : 0,
         ...calc,
       };
       state.sales.push(sale);
-      adjustStockForSale(sale, -1);
       renderAll();
       scheduleSync();
       toast('Sale added to history', 'success');
@@ -2009,7 +1951,6 @@
       const i = state.sales.findIndex((s) => s.id === id);
       if (i === -1) return;
       if (!confirm(`Delete "${state.sales[i].name}"?`)) return;
-      adjustStockForSale(state.sales[i], 1);
       state.sales.splice(i, 1);
       renderAll();
       scheduleSync();
@@ -2026,10 +1967,8 @@
     function updateSale(id, patch) {
       const s = state.sales.find((x) => x.id === id);
       if (!s) return;
-      adjustStockForSale(s, 1);
       Object.assign(s, patch);
       Object.assign(s, computeSale(s));
-      adjustStockForSale(s, -1);
       renderAll();
       scheduleSync();
     }
@@ -2324,7 +2263,6 @@
             <h3>No stock tracked yet</h3>
             <p>Add your boxes, envelopes, bubble wrap and tape above.</p>
           </div>`;
-        renderPackingSelects();
         return;
       }
 
@@ -2377,8 +2315,6 @@
       $$('[data-action="stock-delete"]', body).forEach((b) =>
         b.addEventListener('click', () => deleteStockItem(b.dataset.id))
       );
-
-      renderPackingSelects();
     }
 
     function addStockItem({ category, label, qty, threshold }) {
@@ -2562,21 +2498,17 @@
       const proceeds = parseNum($('#f-proceeds').value);
       const cog = parseNum($('#f-cog').value);
       const shipping = parseNum($('#f-ship').value);
-      const packItemId = $('#f-pack-item').value || null;
-      const packQty = Math.max(1, Math.round(parseNum($('#f-pack-qty').value) || 1));
 
       if (!date) { toast('Pick a date', 'error'); return; }
       if (!name) { toast('Name the item', 'error'); return; }
       if (proceeds <= 0) { toast('Enter a sale amount', 'error'); return; }
 
-      addSale({ platform: state.ui.platform, date, name, proceeds, cog, shipping, packItemId, packQty });
+      addSale({ platform: state.ui.platform, date, name, proceeds, cog, shipping });
 
       $('#f-name').value = '';
       $('#f-proceeds').value = '';
       $('#f-cog').value = '';
       $('#f-ship').value = '';
-      $('#f-pack-item').value = '';
-      $('#f-pack-qty').value = '1';
       renderLivePreview();
       $('#f-name').focus();
     }
@@ -2596,8 +2528,6 @@
       $('#e-cog').value = s.cog;
       $('#e-ship').value = s.shipping;
       $('#e-status').value = s.status;
-      $('#e-pack-item').value = s.packItemId || '';
-      $('#e-pack-qty').value = s.packQty || 1;
 
       switchEditPlatform(s.platform);
       $('#modal').setAttribute('data-open', 'true');
@@ -2625,8 +2555,6 @@
     function saveEdit() {
       const id = state.ui.editingId;
       if (!id) return;
-      const packItemId = $('#e-pack-item').value || null;
-      const packQty = Math.max(1, Math.round(parseNum($('#e-pack-qty').value) || 1));
       const patch = {
         platform: state.ui.editPlatform,
         date: $('#e-date').value,
@@ -2635,8 +2563,6 @@
         cog: parseNum($('#e-cog').value),
         shipping: parseNum($('#e-ship').value),
         status: $('#e-status').value === 'refund' ? 'refund' : 'sale',
-        packItemId,
-        packQty: packItemId ? packQty : 0,
       };
       if (!patch.date || !patch.name || patch.proceeds <= 0) {
         toast('Fill the required fields', 'error');
