@@ -661,6 +661,32 @@
     .cat-subscription { background: var(--neg-soft); color: var(--neg); }
     .cat-other        { background: var(--bg-subtle); color: var(--ink-2); }
 
+    /* =========================================================================
+       STOCK CATEGORY BADGES + LOW-STOCK STATES
+       ========================================================================= */
+    .cat-box        { background: var(--teal-soft); color: var(--teal); }
+    .cat-envelope   { background: var(--purple-soft); color: var(--purple); }
+    .cat-bubblewrap { background: var(--accent-soft); color: var(--accent-deep); }
+    .cat-tape       { background: var(--warn-soft); color: var(--warn); }
+
+    .stock-alert {
+      margin: 0 0 14px;
+      padding: 10px 14px;
+      border-radius: var(--radius-sm);
+      background: var(--warn-soft);
+      color: var(--warn);
+      font-size: 13px;
+      font-weight: 600;
+    }
+    tr.low-stock { background: var(--warn-soft); }
+    .low-badge {
+      display: inline-flex; align-items: center;
+      padding: 2px 8px; border-radius: 999px;
+      font-size: 10px; font-weight: 700;
+      background: var(--warn); color: #fff;
+      margin-left: 6px;
+    }
+
     @media print {
       body { background: #fff; }
       .topbar, .actions, .history-toolbar, .row-actions, .table-footer { display: none !important; }
@@ -700,6 +726,7 @@
     <div class="main-tabs" role="tablist" aria-label="Section">
       <button class="main-tab" role="tab" aria-selected="true" data-section="sales" type="button">Sales</button>
       <button class="main-tab" role="tab" aria-selected="false" data-section="expenses" type="button">Expenses</button>
+      <button class="main-tab" role="tab" aria-selected="false" data-section="stock" type="button">Packing Supply Stock</button>
     </div>
 
     <!-- ===================== SALES VIEW ===================== -->
@@ -1009,6 +1036,74 @@
         </div>
       </section>
     </div><!-- end view-expenses -->
+
+    <!-- ===================== STOCK VIEW ===================== -->
+    <div id="view-stock" hidden>
+      <div class="split">
+        <section class="card" aria-labelledby="stock-title">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Track</div>
+              <h2 class="card-heading" id="stock-title">New stock item</h2>
+            </div>
+          </div>
+          <form id="stock-form" autocomplete="off" novalidate>
+            <div class="form-grid">
+              <div class="field">
+                <label for="st-cat">Category</label>
+                <select id="st-cat">
+                  <option value="box">Boxes</option>
+                  <option value="envelope">Bubble Envelopes</option>
+                  <option value="bubblewrap">Bubble Wrap</option>
+                  <option value="tape">Tape</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="st-label">Size / label</label>
+                <input type="text" id="st-label" maxlength="60" placeholder="e.g. 8x6x4" required />
+              </div>
+              <div class="field">
+                <label for="st-qty">Quantity in stock</label>
+                <input type="number" id="st-qty" min="0" step="1" placeholder="0" required />
+              </div>
+              <div class="field">
+                <label for="st-threshold">Low-stock alert at</label>
+                <input type="number" id="st-threshold" min="0" step="1" placeholder="10" value="10" />
+              </div>
+            </div>
+            <div class="actions">
+              <button type="submit" class="btn btn-primary" id="btn-add-stock">Add stock item</button>
+              <button type="reset" class="btn btn-ghost" id="btn-stock-reset">Reset</button>
+            </div>
+          </form>
+        </section>
+
+        <aside class="card" aria-labelledby="stock-snap-title">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Overview</div>
+              <h2 class="card-heading" id="stock-snap-title">Stock snapshot</h2>
+            </div>
+          </div>
+          <div class="snapshot-grid" style="grid-template-columns: 1fr 1fr 1fr;">
+            <div class="stat"><div class="label">Item types</div><div class="value small" id="stk-types">0</div></div>
+            <div class="stat"><div class="label">Total units</div><div class="value small" id="stk-total">0</div></div>
+            <div class="stat accent"><div class="label">Running low</div><div class="value small" id="stk-low">0</div><div class="meta">Below alert level</div></div>
+          </div>
+        </aside>
+      </div>
+
+      <section class="card" aria-labelledby="stock-log-title">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Ledger</div>
+            <h2 class="card-heading" id="stock-log-title">Packing supplies</h2>
+          </div>
+        </div>
+        <div id="stock-low-banner"></div>
+        <div id="stock-body"></div>
+      </section>
+    </div><!-- end view-stock -->
   </div>
 
   <!-- ===================== EDIT MODAL ===================== -->
@@ -1129,6 +1224,51 @@
     </div>
   </div>
 
+  <!-- ===================== STOCK EDIT MODAL ===================== -->
+  <div class="modal-backdrop" id="stock-modal" role="dialog" aria-modal="true" aria-labelledby="stock-modal-title">
+    <div class="modal">
+      <header class="modal-header">
+        <h3 class="modal-title" id="stock-modal-title">Edit stock item</h3>
+        <button class="modal-close" id="stock-modal-close" aria-label="Close" type="button">
+          <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
+            <path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+          </svg>
+        </button>
+      </header>
+      <div class="modal-body">
+        <form id="stock-edit-form" autocomplete="off">
+          <div class="form-grid">
+            <div class="field">
+              <label for="est-cat">Category</label>
+              <select id="est-cat">
+                <option value="box">Boxes</option>
+                <option value="envelope">Bubble Envelopes</option>
+                <option value="bubblewrap">Bubble Wrap</option>
+                <option value="tape">Tape</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="est-label">Size / label</label>
+              <input type="text" id="est-label" maxlength="60" required />
+            </div>
+            <div class="field">
+              <label for="est-qty">Quantity</label>
+              <input type="number" id="est-qty" min="0" step="1" required />
+            </div>
+            <div class="field">
+              <label for="est-threshold">Low-stock alert at</label>
+              <input type="number" id="est-threshold" min="0" step="1" required />
+            </div>
+          </div>
+        </form>
+      </div>
+      <footer class="modal-footer">
+        <button class="btn btn-ghost" id="stock-modal-cancel" type="button">Cancel</button>
+        <button class="btn btn-primary" id="stock-modal-save" type="button">Save changes</button>
+      </footer>
+    </div>
+  </div>
+
   <!-- ===================== COMMENT MODAL ===================== -->
   <div class="modal-backdrop" id="note-modal" role="dialog" aria-modal="true" aria-labelledby="note-modal-title">
     <div class="modal">
@@ -1167,7 +1307,7 @@
       JSONBIN_BASE:   'https://api.jsonbin.io/v3/b',
       TAX_RATE:       0.20,
       DEBOUNCE_MS:    800,
-      SCHEMA_VERSION: 4,
+      SCHEMA_VERSION: 5,
     });
 
     /* =========================================================================
@@ -1176,6 +1316,7 @@
     const state = {
       sales: [],
       expenses: [],
+      stock: [],
       sync: {
         loadComplete: false,
         localDirty: false,
@@ -1196,6 +1337,7 @@
         expCat: 'all',
         expSearch: '',
         editingExpenseId: null,
+        editingStockId: null,
         editingNoteId: null,
         noteKind: 'sale',
         sortCol: null,
@@ -1330,23 +1472,24 @@
 
         // Compressed format (schema 3+): { schema, compressed: "<base64 gzip>" }
         // Schema 3 payload: [sales]   Schema 4 payload: { sales: [], expenses: [] }
+        // Schema 5 payload: { sales: [], expenses: [], stock: [] }
         if (data && typeof data.compressed === 'string') {
           try {
             const unpacked = await gunzipBase64(data.compressed);
-            if (Array.isArray(unpacked)) return { sales: unpacked, expenses: [], schema: data.schema };
-            if (unpacked && Array.isArray(unpacked.sales)) return { expenses: [], ...unpacked };
+            if (Array.isArray(unpacked)) return { sales: unpacked, expenses: [], stock: [], schema: data.schema };
+            if (unpacked && Array.isArray(unpacked.sales)) return { expenses: [], stock: [], ...unpacked };
           } catch (e) {
             console.error('Decompress failed', e);
           }
-          return { sales: [], expenses: [], schema: CONFIG.SCHEMA_VERSION };
+          return { sales: [], expenses: [], stock: [], schema: CONFIG.SCHEMA_VERSION };
         }
 
         // Legacy formats
-        if (Array.isArray(data)) return { sales: data, expenses: [], schema: 1 };
-        if (data && Array.isArray(data.sales)) return { expenses: [], ...data };
+        if (Array.isArray(data)) return { sales: data, expenses: [], stock: [], schema: 1 };
+        if (data && Array.isArray(data.sales)) return { expenses: [], stock: [], ...data };
 
         // Bin contains something unexpected (e.g. {test:true}) — treat as empty
-        return { sales: [], expenses: [], schema: CONFIG.SCHEMA_VERSION };
+        return { sales: [], expenses: [], stock: [], schema: CONFIG.SCHEMA_VERSION };
       },
 
       async save(payload) {
@@ -1354,6 +1497,7 @@
         const compressed = await gzipBase64({
           sales: payload.sales || [],
           expenses: payload.expenses || [],
+          stock: payload.stock || [],
         });
         const body = JSON.stringify({ schema: CONFIG.SCHEMA_VERSION, compressed });
         const res = await fetch(url, {
@@ -1376,11 +1520,12 @@
       // Save locally immediately so data isn't lost if cloud fails
       localStorage.setItem('sales_local', JSON.stringify(state.sales));
       localStorage.setItem('expenses_local', JSON.stringify(state.expenses));
+      localStorage.setItem('stock_local', JSON.stringify(state.stock));
       writeSyncMeta({ dirty: true, updatedAt: new Date().toISOString() });
       clearTimeout(saveTimer);
       saveTimer = setTimeout(async () => {
         try {
-          await api.save({ schema: CONFIG.SCHEMA_VERSION, sales: state.sales, expenses: state.expenses });
+          await api.save({ schema: CONFIG.SCHEMA_VERSION, sales: state.sales, expenses: state.expenses, stock: state.stock });
           state.sync.localDirty = false;
           state.sync.changedDuringLoad = false;
           writeSyncMeta({ dirty: false, syncedAt: new Date().toISOString() });
@@ -1449,6 +1594,38 @@
     }
 
     /* =========================================================================
+     * STOCK — model
+     * ========================================================================= */
+    const STOCK_CATS = {
+      box: 'Boxes',
+      envelope: 'Bubble Envelopes',
+      bubblewrap: 'Bubble Wrap',
+      tape: 'Tape',
+    };
+
+    function normaliseStockItem(raw) {
+      return {
+        id:        raw.id || uid(),
+        category:  STOCK_CATS[raw.category] ? raw.category : 'box',
+        label:     String(raw.label || raw.size || 'Item').slice(0, 60),
+        qty:       Math.max(0, Math.round(parseNum(raw.qty))),
+        threshold: Math.max(0, Math.round(parseNum(raw.threshold))),
+        createdAt: raw.createdAt || new Date().toISOString(),
+      };
+    }
+
+    function seedDefaultStock() {
+      const now = new Date().toISOString();
+      state.stock = [
+        { id: 'seed_box_8x6x4',   category: 'box',        label: '8x6x4',    qty: 31, threshold: 10, createdAt: now },
+        { id: 'seed_box_12x9x6',  category: 'box',        label: '12x9x6',   qty: 40, threshold: 10, createdAt: now },
+        { id: 'seed_envelope_std', category: 'envelope',   label: 'Standard', qty: 96, threshold: 20, createdAt: now },
+        { id: 'seed_bubblewrap',  category: 'bubblewrap',  label: 'Roll',     qty: 0,  threshold: 5,  createdAt: now },
+        { id: 'seed_tape',        category: 'tape',        label: 'Roll',     qty: 0,  threshold: 5,  createdAt: now },
+      ];
+    }
+
+    /* =========================================================================
      * FILTERING
      * ========================================================================= */
     function inRange(dateStr, range) {
@@ -1511,6 +1688,7 @@
       renderSnapshot();
       renderHistory();
       renderExpenses();
+      renderStock();
     }
 
     function renderLivePreview() {
@@ -2057,6 +2235,185 @@
     }
 
     /* =========================================================================
+     * STOCK — render + actions
+     * ========================================================================= */
+    function renderStock() {
+      const sorted = [...state.stock].sort((a, b) =>
+        (STOCK_CATS[a.category] || '').localeCompare(STOCK_CATS[b.category] || '') ||
+        a.label.localeCompare(b.label)
+      );
+      const low = sorted.filter((x) => x.qty <= x.threshold);
+
+      $('#stk-types').textContent = String(state.stock.length);
+      $('#stk-total').textContent = String(state.stock.reduce((t, x) => t + x.qty, 0));
+      $('#stk-low').textContent   = String(low.length);
+
+      const banner = $('#stock-low-banner');
+      banner.innerHTML = low.length
+        ? `<div class="stock-alert">⚠ ${low.length} item${low.length === 1 ? '' : 's'} running low: ${
+            low.map((x) => esc(`${STOCK_CATS[x.category]} — ${x.label}`)).join(', ')
+          }</div>`
+        : '';
+
+      const body = $('#stock-body');
+
+      if (sorted.length === 0) {
+        body.innerHTML = `
+          <div class="empty">
+            <h3>No stock tracked yet</h3>
+            <p>Add your boxes, envelopes, bubble wrap and tape above.</p>
+          </div>`;
+        return;
+      }
+
+      const rows = sorted.map((x) => `
+        <tr class="${x.qty <= x.threshold ? 'low-stock' : ''}">
+          <td><span class="cat-badge cat-${esc(x.category)}">${esc(STOCK_CATS[x.category] || 'Other')}</span></td>
+          <td>${esc(x.label)}</td>
+          <td class="num">${x.qty}${x.qty <= x.threshold ? '<span class="low-badge">Low</span>' : ''}</td>
+          <td class="num">${x.threshold}</td>
+          <td>
+            <div class="row-actions">
+              <button class="icon-btn" data-action="stock-minus" data-id="${x.id}" title="Use one" aria-label="Decrease quantity" style="font-weight:700;font-size:15px;">−</button>
+              <button class="icon-btn" data-action="stock-plus" data-id="${x.id}" title="Restock one" aria-label="Increase quantity" style="font-weight:700;font-size:15px;">+</button>
+              <button class="icon-btn" data-action="stock-edit" data-id="${x.id}" title="Edit" aria-label="Edit item">
+                <svg viewBox="0 0 16 16"><path d="M11 2l3 3-8 8H3v-3l8-8z" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linejoin="round"/></svg>
+              </button>
+              <button class="icon-btn danger" data-action="stock-delete" data-id="${x.id}" title="Delete" aria-label="Delete item">
+                <svg viewBox="0 0 16 16"><path d="M3 4h10M6 4V2h4v2M4 4l1 10h6l1-10" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </button>
+            </div>
+          </td>
+        </tr>
+      `).join('');
+
+      body.innerHTML = `
+        <div class="table-wrap">
+          <table class="sales">
+            <thead>
+              <tr>
+                <th>Category</th>
+                <th>Size / label</th>
+                <th class="num">Qty</th>
+                <th class="num">Alert at</th>
+                <th><span class="sr-only">Actions</span></th>
+              </tr>
+            </thead>
+            <tbody>${rows}</tbody>
+          </table>
+        </div>`;
+
+      $$('[data-action="stock-minus"]', body).forEach((b) =>
+        b.addEventListener('click', () => adjustStockQty(b.dataset.id, -1))
+      );
+      $$('[data-action="stock-plus"]', body).forEach((b) =>
+        b.addEventListener('click', () => adjustStockQty(b.dataset.id, 1))
+      );
+      $$('[data-action="stock-edit"]', body).forEach((b) =>
+        b.addEventListener('click', () => openStockEdit(b.dataset.id))
+      );
+      $$('[data-action="stock-delete"]', body).forEach((b) =>
+        b.addEventListener('click', () => deleteStockItem(b.dataset.id))
+      );
+    }
+
+    function addStockItem({ category, label, qty, threshold }) {
+      state.stock.push({
+        id: uid(),
+        category,
+        label: label.trim(),
+        qty: Math.max(0, Math.round(qty)),
+        threshold: Math.max(0, Math.round(threshold)),
+        createdAt: new Date().toISOString(),
+      });
+      renderAll();
+      scheduleSync();
+      toast('Stock item added', 'success');
+    }
+
+    function adjustStockQty(id, delta) {
+      const item = state.stock.find((x) => x.id === id);
+      if (!item) return;
+      item.qty = Math.max(0, item.qty + delta);
+      renderAll();
+      scheduleSync();
+    }
+
+    function deleteStockItem(id) {
+      const i = state.stock.findIndex((x) => x.id === id);
+      if (i === -1) return;
+      if (!confirm(`Delete "${state.stock[i].label}"?`)) return;
+      state.stock.splice(i, 1);
+      renderAll();
+      scheduleSync();
+    }
+
+    function updateStockItem(id, patch) {
+      const item = state.stock.find((x) => x.id === id);
+      if (!item) return;
+      Object.assign(item, patch);
+      renderAll();
+      scheduleSync();
+    }
+
+    function handleStockSubmit(e) {
+      e.preventDefault();
+      const category = $('#st-cat').value;
+      const label = $('#st-label').value.trim();
+      const qty = parseNum($('#st-qty').value);
+      const threshold = parseNum($('#st-threshold').value) || 0;
+
+      if (!label) { toast('Enter a size or label', 'error'); return; }
+
+      addStockItem({ category, label, qty, threshold });
+
+      $('#st-label').value = '';
+      $('#st-qty').value = '';
+      $('#st-threshold').value = '10';
+      $('#st-label').focus();
+    }
+
+    /* =========================================================================
+     * STOCK — edit modal
+     * ========================================================================= */
+    function openStockEdit(id) {
+      const item = state.stock.find((x) => x.id === id);
+      if (!item) return;
+      state.ui.editingStockId = id;
+
+      $('#est-cat').value = item.category;
+      $('#est-label').value = item.label;
+      $('#est-qty').value = item.qty;
+      $('#est-threshold').value = item.threshold;
+
+      $('#stock-modal').setAttribute('data-open', 'true');
+      document.body.style.overflow = 'hidden';
+      setTimeout(() => $('#est-label').focus(), 50);
+    }
+
+    function closeStockEdit() {
+      $('#stock-modal').setAttribute('data-open', 'false');
+      document.body.style.overflow = '';
+      state.ui.editingStockId = null;
+    }
+
+    function saveStockEdit() {
+      const id = state.ui.editingStockId;
+      if (!id) return;
+
+      const category = $('#est-cat').value;
+      const label = $('#est-label').value.trim();
+      const qty = parseNum($('#est-qty').value);
+      const threshold = parseNum($('#est-threshold').value) || 0;
+
+      if (!label) { toast('Enter a size or label', 'error'); return; }
+
+      updateStockItem(id, { category, label, qty, threshold });
+      closeStockEdit();
+      toast('Stock item updated', 'success');
+    }
+
+    /* =========================================================================
      * COMMENT MODAL — shared by sales + expenses
      * ========================================================================= */
     function openNote(id) {
@@ -2114,6 +2471,7 @@
       );
       $('#view-sales').hidden = name !== 'sales';
       $('#view-expenses').hidden = name !== 'expenses';
+      $('#view-stock').hidden = name !== 'stock';
     }
 
     /* =========================================================================
@@ -2240,6 +2598,7 @@
       // Restore last active tab
       const savedSection = localStorage.getItem('active_section');
       if (savedSection === 'expenses') switchSection('expenses');
+      if (savedSection === 'stock') switchSection('stock');
 
       // Section tabs (Sales ↔ Expenses)
       $$('.main-tabs [data-section]').forEach((tab) => {
@@ -2261,6 +2620,19 @@
         state.ui.expSearch = e.target.value; renderExpenses();
       });
       $('#x-export').addEventListener('click', exportExpensesCSV);
+
+      // Stock form
+      $('#stock-form').addEventListener('submit', handleStockSubmit);
+      $('#stock-modal-close').addEventListener('click', closeStockEdit);
+      $('#stock-modal-cancel').addEventListener('click', closeStockEdit);
+      $('#stock-modal-save').addEventListener('click', saveStockEdit);
+      $('#stock-modal').addEventListener('click', (e) => {
+        if (e.target.id === 'stock-modal') closeStockEdit();
+      });
+      $('#stock-edit-form').addEventListener('submit', (e) => { e.preventDefault(); saveStockEdit(); });
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && $('#stock-modal').getAttribute('data-open') === 'true') closeStockEdit();
+      });
 
       // Calculator platform tabs
       $$('.tabs [data-platform]').forEach((tab) => {
@@ -2363,6 +2735,7 @@
       // Show cached data instantly while cloud loads
       const local = localStorage.getItem('sales_local');
       const localExp = localStorage.getItem('expenses_local');
+      const localStock = localStorage.getItem('stock_local');
       const syncMeta = readSyncMeta();
       state.sync.localDirty = syncMeta.dirty === true;
       if (local) {
@@ -2375,6 +2748,11 @@
           state.expenses = JSON.parse(localExp).map(normaliseExpense);
         } catch (e) { /* corrupt cache — ignore and wait for cloud */ }
       }
+      if (localStock) {
+        try {
+          state.stock = JSON.parse(localStock).map(normaliseStockItem);
+        } catch (e) { /* corrupt cache — ignore and wait for cloud */ }
+      }
       renderAll();
 
       // Load remote data
@@ -2383,6 +2761,7 @@
         const data = await api.load();
         const remote = (data.sales || []).map(normaliseSale);
         const remoteExp = (data.expenses || []).map(normaliseExpense);
+        const remoteStock = (data.stock || []).map(normaliseStockItem);
         if (state.sync.localDirty || state.sync.changedDuringLoad) {
           // Merge: local unsaved changes win per-ID, but keep any remote-only entries
           const mergeById = (localList, remoteList) => {
@@ -2398,15 +2777,25 @@
           };
           state.sales = mergeById(state.sales, remote);
           state.expenses = mergeById(state.expenses, remoteExp);
+          state.stock = mergeById(state.stock, remoteStock);
           setSync('syncing', 'Saving local changes…');
           scheduleSync();
         } else {
           state.sales = remote;
           state.expenses = remoteExp;
+          state.stock = remoteStock;
           localStorage.setItem('sales_local', JSON.stringify(state.sales));
           localStorage.setItem('expenses_local', JSON.stringify(state.expenses));
+          localStorage.setItem('stock_local', JSON.stringify(state.stock));
           writeSyncMeta({ dirty: false, syncedAt: new Date().toISOString() });
           setSync('ok', 'Synced');
+        }
+
+        // First-ever run of the stock tracker: seed starting quantities once,
+        // then sync so every device converges on the same seeded data.
+        if (!localStock && remoteStock.length === 0 && state.stock.length === 0) {
+          seedDefaultStock();
+          scheduleSync();
         }
       } catch (err) {
         console.error(err);
