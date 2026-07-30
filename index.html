@@ -643,6 +643,10 @@
       color: var(--accent-deep);
     }
     .main-tab:hover:not([aria-selected="true"]) { background: var(--bg-subtle); color: var(--ink); }
+    @media (max-width: 560px) {
+      .main-tabs { display: flex; max-width: 100%; overflow-x: auto; }
+      .main-tab { padding: 8px 12px; font-size: 12.5px; white-space: nowrap; }
+    }
 
     /* =========================================================================
        EXPENSE CATEGORY BADGES
@@ -685,6 +689,41 @@
       font-size: 10px; font-weight: 700;
       background: var(--warn); color: #fff;
       margin-left: 6px;
+    }
+
+    /* Stock cards — mobile layout, avoids the sideways scroll of the table.
+       Both markups render; CSS swaps them at the breakpoint. */
+    .stock-cards { display: none; }
+    @media (max-width: 700px) {
+      .stock-cards { display: grid; gap: 10px; }
+      #stock-body .table-wrap { display: none; }
+    }
+    .stock-card {
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-md);
+      background: var(--card);
+      padding: 14px;
+    }
+    .stock-card.low { background: var(--warn-soft); border-color: var(--warn); }
+    .stock-card-top {
+      display: flex; justify-content: space-between;
+      align-items: flex-start; gap: 10px; margin-bottom: 12px;
+    }
+    .stock-card-label { font-size: 16px; font-weight: 700; color: var(--ink); }
+    .stock-card-meta { font-size: 11.5px; color: var(--ink-3); margin-top: 4px; }
+    .stock-card-controls { display: flex; align-items: center; gap: 12px; }
+    .qty-btn {
+      width: 52px; height: 48px; flex: none;
+      border-radius: var(--radius-sm);
+      border: 1.5px solid var(--border-strong);
+      background: var(--card); color: var(--ink);
+      font-size: 26px; font-weight: 700; line-height: 1;
+      display: grid; place-items: center;
+    }
+    .qty-btn:active { background: var(--bg-subtle); }
+    .stock-card-qty {
+      flex: 1; text-align: center;
+      font-family: var(--font-mono); font-size: 26px; font-weight: 700;
     }
 
     @media print {
@@ -1039,6 +1078,17 @@
 
     <!-- ===================== STOCK VIEW ===================== -->
     <div id="view-stock" hidden>
+      <section class="card" aria-labelledby="stock-log-title" style="margin-bottom: 20px;">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Ledger</div>
+            <h2 class="card-heading" id="stock-log-title">Packing supplies</h2>
+          </div>
+        </div>
+        <div id="stock-low-banner"></div>
+        <div id="stock-body"></div>
+      </section>
+
       <div class="split">
         <section class="card" aria-labelledby="stock-title">
           <div class="card-header">
@@ -1092,17 +1142,6 @@
           </div>
         </aside>
       </div>
-
-      <section class="card" aria-labelledby="stock-log-title">
-        <div class="card-header">
-          <div>
-            <div class="card-title">Ledger</div>
-            <h2 class="card-heading" id="stock-log-title">Packing supplies</h2>
-          </div>
-        </div>
-        <div id="stock-low-banner"></div>
-        <div id="stock-body"></div>
-      </section>
     </div><!-- end view-stock -->
   </div>
 
@@ -2287,7 +2326,32 @@
         </tr>
       `).join('');
 
+      const cards = sorted.map((x) => `
+        <div class="stock-card ${x.qty <= x.threshold ? 'low' : ''}">
+          <div class="stock-card-top">
+            <div>
+              <div class="stock-card-label">${esc(x.label)}${x.qty <= x.threshold ? '<span class="low-badge">Low</span>' : ''}</div>
+              <div class="stock-card-meta">${esc(STOCK_CATS[x.category] || 'Other')} · alert at ${x.threshold}</div>
+            </div>
+            <div class="row-actions">
+              <button class="icon-btn" data-action="stock-edit" data-id="${x.id}" title="Edit" aria-label="Edit item">
+                <svg viewBox="0 0 16 16"><path d="M11 2l3 3-8 8H3v-3l8-8z" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linejoin="round"/></svg>
+              </button>
+              <button class="icon-btn danger" data-action="stock-delete" data-id="${x.id}" title="Delete" aria-label="Delete item">
+                <svg viewBox="0 0 16 16"><path d="M3 4h10M6 4V2h4v2M4 4l1 10h6l1-10" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </button>
+            </div>
+          </div>
+          <div class="stock-card-controls">
+            <button class="qty-btn" data-action="stock-minus" data-id="${x.id}" aria-label="Use one ${esc(x.label)}">−</button>
+            <span class="stock-card-qty">${x.qty}</span>
+            <button class="qty-btn" data-action="stock-plus" data-id="${x.id}" aria-label="Restock one ${esc(x.label)}">+</button>
+          </div>
+        </div>
+      `).join('');
+
       body.innerHTML = `
+        <div class="stock-cards">${cards}</div>
         <div class="table-wrap">
           <table class="sales">
             <thead>
