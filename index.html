@@ -465,8 +465,14 @@
     }
     .summary-cell .value.pos { color: var(--pos); }
     .summary-cell .value.neg { color: var(--neg); }
-    @media (max-width: 780px) { .summary-row { grid-template-columns: repeat(2,1fr); } }
-    @media (max-width: 380px)  { .summary-row { grid-template-columns: 1fr; } }
+    @media (max-width: 780px) {
+      .summary-row { grid-template-columns: repeat(2,1fr); }
+      /* Five cells in two columns leaves a gap — let Net profit take the last row. */
+      .summary-cell:last-child { grid-column: 1 / -1; }
+      .summary-cell { padding: 12px 14px; }
+      .summary-cell .value { font-size: 15px; }
+    }
+    @media (max-width: 330px)  { .summary-row { grid-template-columns: 1fr; } }
 
     .table-wrap {
       overflow-x: auto;
@@ -726,6 +732,110 @@
       font-family: var(--font-mono); font-size: 26px; font-weight: 700;
     }
 
+    /* =========================================================================
+       RECORD CARDS — mobile layout for sales history + expense log.
+       Same trick as the stock cards: both markups render, CSS swaps them
+       at the breakpoint so neither list needs a sideways scroll on a phone.
+       ========================================================================= */
+    .record-cards { display: none; }
+    .mobile-only { display: none; }
+    @media (max-width: 700px) {
+      .record-cards { display: grid; gap: 10px; }
+      .mobile-only { display: block; }
+      #history-body .table-wrap,
+      #expenses-body .table-wrap { display: none; }
+    }
+    .record-card {
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-md);
+      background: var(--card);
+      padding: 14px;
+    }
+    .record-card.refunded { background: var(--neg-soft); border-color: var(--neg); }
+    .record-card-top {
+      display: flex; justify-content: space-between;
+      align-items: flex-start; gap: 10px;
+    }
+    .record-card-title {
+      font-size: 15px; font-weight: 700; color: var(--ink);
+      line-height: 1.3; overflow-wrap: anywhere;
+    }
+    .record-card-sub { font-size: 11.5px; color: var(--ink-3); margin-top: 4px; }
+    .record-card-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 9px; }
+    /* Actions sit in their own row so long item names get the full card width. */
+    .record-card-actions {
+      display: flex; justify-content: flex-end;
+      margin-top: 10px; padding-top: 10px;
+      border-top: 1px solid var(--border);
+    }
+
+    /* Headline number — profit for a sale, amount for an expense. */
+    .record-card-headline {
+      display: flex; align-items: baseline; justify-content: space-between;
+      gap: 10px; margin-top: 12px; padding-top: 12px;
+      border-top: 1px solid var(--border);
+    }
+    .record-card-headline .label {
+      font-size: 10px; font-weight: 700; letter-spacing: 0.1em;
+      text-transform: uppercase; color: var(--ink-4);
+    }
+    .record-card-headline .value {
+      font-family: var(--font-mono); font-size: 20px; font-weight: 700;
+      font-variant-numeric: tabular-nums; letter-spacing: -0.025em;
+    }
+    .record-card-headline .value.pos { color: var(--pos); }
+    .record-card-headline .value.neg { color: var(--neg); }
+
+    /* Supporting figures — COG / payout / ship / tax, or the monthly split. */
+    .record-figures {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 10px; margin-top: 12px; padding-top: 12px;
+      border-top: 1px solid var(--border);
+    }
+    .record-figure .label {
+      font-size: 9.5px; font-weight: 700; letter-spacing: 0.09em;
+      text-transform: uppercase; color: var(--ink-4); margin-bottom: 3px;
+    }
+    .record-figure .value {
+      font-family: var(--font-mono); font-size: 13.5px; font-weight: 600;
+      font-variant-numeric: tabular-nums; color: var(--ink);
+    }
+    .record-figure .value.pos { color: var(--pos); }
+    .record-figure .value.neg { color: var(--neg); }
+
+    /* Monthly cards are tappable — hint at it. */
+    .record-card.tappable { cursor: pointer; }
+    .record-card.tappable:active { background: var(--bg-subtle); }
+    .record-card-chevron { color: var(--ink-4); flex: none; }
+    .record-card-chevron svg { width: 16px; height: 16px; display: block; }
+
+    /* Touch targets in cards need to be bigger than the desktop icon buttons. */
+    @media (max-width: 700px) {
+      .record-card .icon-btn { width: 38px; height: 38px; }
+      .record-card .icon-btn svg { width: 17px; height: 17px; }
+      .record-card .row-actions { gap: 4px; }
+    }
+
+    /* Filters stack full-width on a phone rather than wrapping raggedly. */
+    @media (max-width: 700px) {
+      .page { padding: 20px 14px 60px; }
+      .card { padding: 18px 16px; }
+      .card-header { flex-wrap: wrap; }
+      .history-toolbar { align-items: stretch; gap: 10px; }
+      .history-toolbar .left,
+      .history-toolbar .right { width: 100%; }
+      .history-toolbar .left { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+      /* The custom-date input is toggled on by JS — give it the full row. */
+      .history-toolbar .left > #filter-date,
+      .history-toolbar .left > #sort-mobile { grid-column: 1 / -1; }
+      .history-toolbar .left > *,
+      .history-toolbar .right > * { width: 100%; min-width: 0; }
+      .select-compact { padding: 11px 12px; padding-right: 30px; font-size: 14px; }
+      .table-footer { flex-direction: column; align-items: stretch; }
+      .table-footer .actions { display: flex; gap: 8px; }
+      .table-footer .actions .btn { flex: 1; }
+    }
+
     @media print {
       body { background: #fff; }
       .topbar, .actions, .history-toolbar, .row-actions, .table-footer { display: none !important; }
@@ -928,6 +1038,15 @@
             <option value="all">All platforms</option>
             <option value="ebay">eBay only</option>
             <option value="vinted">Vinted only</option>
+          </select>
+          <!-- Sorting lives in the table headers, which are hidden on mobile. -->
+          <select id="sort-mobile" class="select-compact mobile-only" aria-label="Sort sales">
+            <option value="date:desc">Newest first</option>
+            <option value="date:asc">Oldest first</option>
+            <option value="profit:desc">Profit: high to low</option>
+            <option value="profit:asc">Profit: low to high</option>
+            <option value="payout:desc">Payout: high to low</option>
+            <option value="cog:desc">Cost: high to low</option>
           </select>
         </div>
         <div class="right">
@@ -1777,6 +1896,14 @@
       const body = $('#history-body');
       const count = $('#count-note');
 
+      // Mobile sort control mirrors the header sort; monthly view has no sorting.
+      const sortSel = $('#sort-mobile');
+      sortSel.hidden = state.ui.view === 'monthly';
+      const wantSort = `${state.ui.sortCol || 'date'}:${state.ui.sortCol ? state.ui.sortDir : 'desc'}`;
+      // Columns like Ship/Tax sort from the header but aren't in the dropdown —
+      // leave the dropdown alone rather than blanking it.
+      if ([...sortSel.options].some((o) => o.value === wantSort)) sortSel.value = wantSort;
+
       if (filtered.length === 0) {
         body.innerHTML = `
           <div class="empty">
@@ -1807,9 +1934,16 @@
       $$('[data-action="note"]', body).forEach((btn) =>
         btn.addEventListener('click', () => openNote(btn.dataset.id))
       );
-      $$('[data-action="month"]', body).forEach((row) =>
-        row.addEventListener('click', () => goToMonth(row.dataset.month))
-      );
+      $$('[data-action="month"]', body).forEach((row) => {
+        row.addEventListener('click', () => goToMonth(row.dataset.month));
+        // Month cards are divs, so Enter/Space need wiring up by hand.
+        row.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            goToMonth(row.dataset.month);
+          }
+        });
+      });
       $$('th[data-sort]', body).forEach((th) =>
         th.addEventListener('click', () => setSort(th.dataset.sort))
       );
@@ -1846,6 +1980,29 @@
       </span>`;
     }
 
+    /* Shared by the desktop table row and the mobile card. */
+    function saleActions(s) {
+      return `
+        <div class="row-actions">
+          <button class="icon-btn" data-action="toggle" data-id="${s.id}" title="Toggle refund status" aria-label="Toggle refund">
+            ${s.status === 'refund'
+              ? '<svg viewBox="0 0 16 16"><path d="M3 8l3 3 7-7" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+              : '<svg viewBox="0 0 16 16"><path d="M5 3h6l1 4M3 7h10l-1 5a2 2 0 01-2 2H6a2 2 0 01-2-2L3 7z" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>'}
+          </button>
+          <button class="icon-btn" data-action="edit" data-id="${s.id}" title="Edit" aria-label="Edit sale">
+            <svg viewBox="0 0 16 16"><path d="M11 2l3 3-8 8H3v-3l8-8z" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linejoin="round"/></svg>
+          </button>
+          <button class="icon-btn ${s.note ? 'has-note' : ''}" data-action="note" data-id="${s.id}" title="${s.note ? 'Edit comment' : 'Add comment'}" aria-label="Comment">
+            ${s.note
+              ? '<svg viewBox="0 0 16 16"><path d="M2 3.5A1.5 1.5 0 013.5 2h9A1.5 1.5 0 0114 3.5v6A1.5 1.5 0 0112.5 11H6l-3 3v-3H3.5A1.5 1.5 0 012 9.5v-6z" fill="currentColor"/></svg>'
+              : '<svg viewBox="0 0 16 16"><path d="M2 3.5A1.5 1.5 0 013.5 2h9A1.5 1.5 0 0114 3.5v6A1.5 1.5 0 0112.5 11H6l-3 3v-3H3.5A1.5 1.5 0 012 9.5v-6z" stroke="currentColor" stroke-width="1.4" fill="none" stroke-linejoin="round"/></svg>'}
+          </button>
+          <button class="icon-btn danger" data-action="delete" data-id="${s.id}" title="Delete" aria-label="Delete sale">
+            <svg viewBox="0 0 16 16"><path d="M3 4h10M6 4V2h4v2M4 4l1 10h6l1-10" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+        </div>`;
+    }
+
     function renderAllTable(list) {
       const { sortCol, sortDir } = state.ui;
       let sorted;
@@ -1871,30 +2028,38 @@
           <td class="num">${s.platform === 'ebay' ? fmtGBP(s.shipping) : '—'}</td>
           <td class="num">${fmtGBP(s.tax)}</td>
           <td class="num ${s.profit >= 0 ? 'pos' : 'neg'}">${fmtGBP(s.profit)}</td>
-          <td>
-            <div class="row-actions">
-              <button class="icon-btn" data-action="toggle" data-id="${s.id}" title="Toggle refund status" aria-label="Toggle refund">
-                ${s.status === 'refund'
-                  ? '<svg viewBox="0 0 16 16"><path d="M3 8l3 3 7-7" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>'
-                  : '<svg viewBox="0 0 16 16"><path d="M5 3h6l1 4M3 7h10l-1 5a2 2 0 01-2 2H6a2 2 0 01-2-2L3 7z" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>'}
-              </button>
-              <button class="icon-btn" data-action="edit" data-id="${s.id}" title="Edit" aria-label="Edit sale">
-                <svg viewBox="0 0 16 16"><path d="M11 2l3 3-8 8H3v-3l8-8z" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linejoin="round"/></svg>
-              </button>
-              <button class="icon-btn ${s.note ? 'has-note' : ''}" data-action="note" data-id="${s.id}" title="${s.note ? 'Edit comment' : 'Add comment'}" aria-label="Comment">
-                ${s.note
-                  ? '<svg viewBox="0 0 16 16"><path d="M2 3.5A1.5 1.5 0 013.5 2h9A1.5 1.5 0 0114 3.5v6A1.5 1.5 0 0112.5 11H6l-3 3v-3H3.5A1.5 1.5 0 012 9.5v-6z" fill="currentColor"/></svg>'
-                  : '<svg viewBox="0 0 16 16"><path d="M2 3.5A1.5 1.5 0 013.5 2h9A1.5 1.5 0 0114 3.5v6A1.5 1.5 0 0112.5 11H6l-3 3v-3H3.5A1.5 1.5 0 012 9.5v-6z" stroke="currentColor" stroke-width="1.4" fill="none" stroke-linejoin="round"/></svg>'}
-              </button>
-              <button class="icon-btn danger" data-action="delete" data-id="${s.id}" title="Delete" aria-label="Delete sale">
-                <svg viewBox="0 0 16 16"><path d="M3 4h10M6 4V2h4v2M4 4l1 10h6l1-10" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
-              </button>
-            </div>
-          </td>
+          <td>${saleActions(s)}</td>
         </tr>
       `).join('');
 
+      const cards = sorted.map((s) => `
+        <div class="record-card ${s.status === 'refund' ? 'refunded' : ''}">
+          <div class="record-card-top">
+            <div>
+              <div class="record-card-title">${esc(s.name)}</div>
+              <div class="record-card-sub">${esc(s.date)}</div>
+              <div class="record-card-tags">
+                <span class="pill ${s.platform}">${s.platform === 'ebay' ? 'eBay' : 'Vinted'}</span>
+                <span class="pill ${s.status}">${s.status === 'refund' ? 'Refund' : 'Sale'}</span>
+              </div>
+            </div>
+          </div>
+          <div class="record-card-headline">
+            <span class="label">Net profit</span>
+            <span class="value ${s.profit >= 0 ? 'pos' : 'neg'}">${fmtGBP(s.profit)}</span>
+          </div>
+          <div class="record-figures">
+            <div class="record-figure"><div class="label">Cost of goods</div><div class="value">${fmtGBP(s.cog)}</div></div>
+            <div class="record-figure"><div class="label">Payout</div><div class="value">${fmtGBP(s.proceeds)}</div></div>
+            <div class="record-figure"><div class="label">Shipping</div><div class="value">${s.platform === 'ebay' ? fmtGBP(s.shipping) : '—'}</div></div>
+            <div class="record-figure"><div class="label">Tax reserve</div><div class="value">${fmtGBP(s.tax)}</div></div>
+          </div>
+          <div class="record-card-actions">${saleActions(s)}</div>
+        </div>
+      `).join('');
+
       return `
+        <div class="record-cards">${cards}</div>
         <div class="table-wrap">
           <table class="sales">
             <thead>
@@ -1925,14 +2090,20 @@
       }
       const keys = [...groups.keys()].sort().reverse();
 
-      const rows = keys.map((key) => {
+      const months = keys.map((key) => {
         const items = groups.get(key);
-        const agg = aggregate(items);
-        const ebay = aggregate(items.filter((i) => i.platform === 'ebay'));
-        const vinted = aggregate(items.filter((i) => i.platform === 'vinted'));
         const [y, m] = key.split('-');
-        const monthLabel = new Date(Number(y), Number(m) - 1, 1)
-          .toLocaleString('en-GB', { month: 'long', year: 'numeric' });
+        return {
+          key,
+          agg: aggregate(items),
+          ebay: aggregate(items.filter((i) => i.platform === 'ebay')),
+          vinted: aggregate(items.filter((i) => i.platform === 'vinted')),
+          monthLabel: new Date(Number(y), Number(m) - 1, 1)
+            .toLocaleString('en-GB', { month: 'long', year: 'numeric' }),
+        };
+      });
+
+      const rows = months.map(({ key, agg, ebay, vinted, monthLabel }) => {
         return `
           <tr style="cursor: pointer;" data-action="month" data-month="${esc(key)}" title="${esc(`Click to view ${monthLabel} sales`)}">
             <td><strong>${esc(monthLabel)}</strong></td>
@@ -1946,7 +2117,33 @@
           </tr>`;
       }).join('');
 
+      const cards = months.map(({ key, agg, ebay, vinted, monthLabel }) => `
+        <div class="record-card tappable" data-action="month" data-month="${esc(key)}" role="button" tabindex="0"
+             aria-label="${esc(`View ${monthLabel} sales`)}">
+          <div class="record-card-top">
+            <div>
+              <div class="record-card-title">${esc(monthLabel)}</div>
+              <div class="record-card-sub">${agg.sales} ${agg.sales === 1 ? 'sale' : 'sales'} · ${agg.refunds} ${agg.refunds === 1 ? 'refund' : 'refunds'}</div>
+            </div>
+            <span class="record-card-chevron" aria-hidden="true">
+              <svg viewBox="0 0 16 16"><path d="M6 3l5 5-5 5" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </span>
+          </div>
+          <div class="record-card-headline">
+            <span class="label">Net profit</span>
+            <span class="value ${agg.profit >= 0 ? 'pos' : 'neg'}">${fmtGBP(agg.profit)}</span>
+          </div>
+          <div class="record-figures">
+            <div class="record-figure"><div class="label">eBay profit</div><div class="value">${fmtGBP(ebay.profit)}</div></div>
+            <div class="record-figure"><div class="label">Vinted profit</div><div class="value">${fmtGBP(vinted.profit)}</div></div>
+            <div class="record-figure"><div class="label">Revenue</div><div class="value">${fmtGBP(agg.revenue)}</div></div>
+            <div class="record-figure"><div class="label">Tax reserve</div><div class="value">${fmtGBP(agg.tax)}</div></div>
+          </div>
+        </div>
+      `).join('');
+
       return `
+        <div class="record-cards">${cards}</div>
         <div class="table-wrap">
           <table class="sales">
             <thead>
@@ -2085,6 +2282,24 @@
       );
     }
 
+    /* Shared by the desktop table row and the mobile card. */
+    function expenseActions(x) {
+      return `
+        <div class="row-actions">
+          <button class="icon-btn" data-action="edit-exp" data-id="${x.id}" title="Edit" aria-label="Edit expense">
+            <svg viewBox="0 0 16 16"><path d="M11 2l3 3-8 8H3v-3l8-8z" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linejoin="round"/></svg>
+          </button>
+          <button class="icon-btn ${x.note ? 'has-note' : ''}" data-action="note-exp" data-id="${x.id}" title="${x.note ? 'Edit comment' : 'Add comment'}" aria-label="Comment">
+            ${x.note
+              ? '<svg viewBox="0 0 16 16"><path d="M2 3.5A1.5 1.5 0 013.5 2h9A1.5 1.5 0 0114 3.5v6A1.5 1.5 0 0112.5 11H6l-3 3v-3H3.5A1.5 1.5 0 012 9.5v-6z" fill="currentColor"/></svg>'
+              : '<svg viewBox="0 0 16 16"><path d="M2 3.5A1.5 1.5 0 013.5 2h9A1.5 1.5 0 0114 3.5v6A1.5 1.5 0 0112.5 11H6l-3 3v-3H3.5A1.5 1.5 0 012 9.5v-6z" stroke="currentColor" stroke-width="1.4" fill="none" stroke-linejoin="round"/></svg>'}
+          </button>
+          <button class="icon-btn danger" data-action="del-exp" data-id="${x.id}" title="Delete" aria-label="Delete expense">
+            <svg viewBox="0 0 16 16"><path d="M3 4h10M6 4V2h4v2M4 4l1 10h6l1-10" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+        </div>`;
+    }
+
     function renderExpenses() {
       $('#xs-month').textContent = fmtGBP(sumExpenses(state.expenses.filter((x) => inRange(x.date, 'month'))));
       $('#xs-year').textContent  = fmtGBP(sumExpenses(state.expenses.filter((x) => inRange(x.date, 'year'))));
@@ -2115,25 +2330,31 @@
           <td class="item-cell" title="${esc(x.desc)}">${esc(x.desc)}</td>
           <td><span class="cat-badge cat-${esc(x.category)}">${esc(EXP_CATS[x.category] || 'Other')}</span></td>
           <td class="num neg">${fmtSignedGBP(x.amount, { subtract: true })}</td>
-          <td>
-            <div class="row-actions">
-              <button class="icon-btn" data-action="edit-exp" data-id="${x.id}" title="Edit" aria-label="Edit expense">
-                <svg viewBox="0 0 16 16"><path d="M11 2l3 3-8 8H3v-3l8-8z" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linejoin="round"/></svg>
-              </button>
-              <button class="icon-btn ${x.note ? 'has-note' : ''}" data-action="note-exp" data-id="${x.id}" title="${x.note ? 'Edit comment' : 'Add comment'}" aria-label="Comment">
-                ${x.note
-                  ? '<svg viewBox="0 0 16 16"><path d="M2 3.5A1.5 1.5 0 013.5 2h9A1.5 1.5 0 0114 3.5v6A1.5 1.5 0 0112.5 11H6l-3 3v-3H3.5A1.5 1.5 0 012 9.5v-6z" fill="currentColor"/></svg>'
-                  : '<svg viewBox="0 0 16 16"><path d="M2 3.5A1.5 1.5 0 013.5 2h9A1.5 1.5 0 0114 3.5v6A1.5 1.5 0 0112.5 11H6l-3 3v-3H3.5A1.5 1.5 0 012 9.5v-6z" stroke="currentColor" stroke-width="1.4" fill="none" stroke-linejoin="round"/></svg>'}
-              </button>
-              <button class="icon-btn danger" data-action="del-exp" data-id="${x.id}" title="Delete" aria-label="Delete expense">
-                <svg viewBox="0 0 16 16"><path d="M3 4h10M6 4V2h4v2M4 4l1 10h6l1-10" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
-              </button>
-            </div>
-          </td>
+          <td>${expenseActions(x)}</td>
         </tr>
       `).join('');
 
+      const cards = filtered.map((x) => `
+        <div class="record-card">
+          <div class="record-card-top">
+            <div>
+              <div class="record-card-title">${esc(x.desc)}</div>
+              <div class="record-card-sub">${esc(x.date)}</div>
+              <div class="record-card-tags">
+                <span class="cat-badge cat-${esc(x.category)}">${esc(EXP_CATS[x.category] || 'Other')}</span>
+              </div>
+            </div>
+          </div>
+          <div class="record-card-headline">
+            <span class="label">Amount</span>
+            <span class="value neg">${fmtSignedGBP(x.amount, { subtract: true })}</span>
+          </div>
+          <div class="record-card-actions">${expenseActions(x)}</div>
+        </div>
+      `).join('');
+
       body.innerHTML = `
+        <div class="record-cards">${cards}</div>
         <div class="table-wrap">
           <table class="sales" style="min-width: 640px;">
             <thead>
@@ -2749,6 +2970,12 @@
       });
       $('#filter-platform').addEventListener('change', (e) => {
         state.ui.platformFilter = e.target.value; renderHistory();
+      });
+      $('#sort-mobile').addEventListener('change', (e) => {
+        const [col, dir] = e.target.value.split(':');
+        state.ui.sortCol = col;
+        state.ui.sortDir = dir;
+        renderHistory();
       });
       $('#filter-search').addEventListener('input', (e) => {
         state.ui.search = e.target.value; renderHistory();
