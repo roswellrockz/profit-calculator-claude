@@ -2010,12 +2010,14 @@
         const field = SORT_FIELDS[sortCol];
         sorted = [...list].sort((a, b) => {
           const diff = field === 'date'
-            ? (a[field] < b[field] ? -1 : a[field] > b[field] ? 1 : 0)
+            ? (a[field] < b[field] ? -1 : a[field] > b[field] ? 1 : a.createdAt < b.createdAt ? -1 : a.createdAt > b.createdAt ? 1 : 0)
             : a[field] - b[field];
           return sortDir === 'asc' ? diff : -diff;
         });
       } else {
-        sorted = [...list].sort((a, b) => (a.date < b.date ? 1 : -1));
+        sorted = [...list].sort((a, b) =>
+          a.date < b.date ? 1 : a.date > b.date ? -1 : a.createdAt < b.createdAt ? 1 : a.createdAt > b.createdAt ? -1 : 0
+        );
       }
       const rows = sorted.map((s) => `
         <tr>
@@ -2244,7 +2246,7 @@
       const header = ['Date', 'Platform', 'Status', 'Item', 'Cost of Goods',
                       'Net Proceeds', 'Shipping', 'Tax', 'Net Profit'];
       const rows = [...state.sales]
-        .sort((a, b) => (a.date < b.date ? 1 : -1))
+        .sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : a.createdAt < b.createdAt ? 1 : a.createdAt > b.createdAt ? -1 : 0))
         .map((s) => [
           s.date,
           s.platform,
@@ -2306,7 +2308,9 @@
       $('#xs-all').textContent   = fmtGBP(sumExpenses(state.expenses));
       $('#xs-count').textContent = String(state.expenses.length);
 
-      const filtered = [...filterExpenses()].sort((a, b) => (a.date < b.date ? 1 : -1));
+      const filtered = [...filterExpenses()].sort((a, b) =>
+        a.date < b.date ? 1 : a.date > b.date ? -1 : a.createdAt < b.createdAt ? 1 : a.createdAt > b.createdAt ? -1 : 0
+      );
       const body = $('#expenses-body');
       const note = $('#x-count-note');
 
@@ -2411,7 +2415,7 @@
       }
       const header = ['Date', 'Description', 'Category', 'Amount'];
       const rows = [...state.expenses]
-        .sort((a, b) => (a.date < b.date ? 1 : -1))
+        .sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : a.createdAt < b.createdAt ? 1 : a.createdAt > b.createdAt ? -1 : 0))
         .map((x) => [
           x.date,
           `"${x.desc.replace(/"/g, '""')}"`,
