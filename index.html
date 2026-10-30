@@ -1464,6 +1464,8 @@
       JSONBIN_KEY:    '$2a$10$BeMBR5JmB30csHg0sdWy1eqbmNywGIK9Ccr7XX.3UFelOqDPgJ8XS',
       JSONBIN_BASE:   'https://api.jsonbin.io/v3/b',
       TAX_RATE:       0.20,
+      JSONBIN_ARCHIVE_BIN_ID: '6ae476a9ac6210605a5e8330',     // Second bin holding older sales (free bins cap at 100KB)
+      ARCHIVE_BEFORE: '2026-10-01',     // Sales dated before this are stored in the archive bin
       DEBOUNCE_MS:    800,
       SCHEMA_VERSION: 5,
     });
@@ -1479,6 +1481,7 @@
         loadComplete: false,
         localDirty: false,
         changedDuringLoad: false,
+        cloudLoaded: false,
       },
       ui: {
         platform: 'ebay',
@@ -1616,9 +1619,26 @@
     /* =========================================================================
      * REMOTE SYNC (JSONBin)
      * ========================================================================= */
+    const isArchivedSale = (sale) => Boolean(sale.date) && sale.date < CONFIG.ARCHIVE_BEFORE;
+
     const api = {
+      // Archive contents as last read from or written to the cloud; skips needless writes
+      lastArchiveJson: null,
+
       async load() {
-        const url = `${CONFIG.JSONBIN_BASE}/${CONFIG.JSONBIN_BIN_ID}/latest`;
+        const main = await this.loadBin(CONFIG.JSONBIN_BIN_ID);
+        if (!CONFIG.JSONBIN_ARCHIVE_BIN_ID) return main;
+
+        const archive = await this.loadBin(CONFIG.JSONBIN_ARCHIVE_BIN_ID, true);
+        this.lastArchiveJson = JSON.stringify(archive.sales);
+
+        // A sale can be in both bins if a save stopped halfway; the main bin's copy wins
+        const mainIds = new Set(main.sales.map(s => s.id));
+        return { ...main, sales: [...archive.sales.filter(s => !mainIds.has(s.id)), ...main.sales] };
+      },
+
+      async loadBin(binId, strict = false) {
+        const url = `${CONFIG.JSONBIN_BASE}/${binId}/latest`;
         const res = await fetch(url, {
           headers: {
             'X-Master-Key': CONFIG.JSONBIN_KEY,
@@ -1639,6 +1659,8 @@
           } catch (e) {
             console.error('Decompress failed', e);
           }
+          // Treating an unreadable archive as empty would erase it on the next save
+          if (strict) throw new Error('Archive could not be read');
           return { sales: [], expenses: [], stock: [], schema: CONFIG.SCHEMA_VERSION };
         }
 
@@ -1646,12 +1668,33 @@
         if (Array.isArray(data)) return { sales: data, expenses: [], stock: [], schema: 1 };
         if (data && Array.isArray(data.sales)) return { expenses: [], stock: [], ...data };
 
+        if (strict) throw new Error('Archive could not be read');
+
         // Bin contains something unexpected (e.g. {test:true}) — treat as empty
         return { sales: [], expenses: [], stock: [], schema: CONFIG.SCHEMA_VERSION };
       },
 
       async save(payload) {
-        const url = `${CONFIG.JSONBIN_BASE}/${CONFIG.JSONBIN_BIN_ID}`;
+        const sales = payload.sales || [];
+        if (!CONFIG.JSONBIN_ARCHIVE_BIN_ID) {
+          return this.saveBin(CONFIG.JSONBIN_BIN_ID, { ...payload, sales });
+        }
+
+        // Archive goes first: if the main write then fails, nothing has left the cloud
+        const archived = sales.filter(isArchivedSale);
+        const archivedJson = JSON.stringify(archived);
+        if (archivedJson !== this.lastArchiveJson) {
+          await this.saveBin(CONFIG.JSONBIN_ARCHIVE_BIN_ID, { sales: archived });
+          this.lastArchiveJson = archivedJson;
+        }
+        return this.saveBin(CONFIG.JSONBIN_BIN_ID, {
+          ...payload,
+          sales: sales.filter(s => !isArchivedSale(s)),
+        });
+      },
+
+      async saveBin(binId, payload) {
+        const url = `${CONFIG.JSONBIN_BASE}/${binId}`;
         const compressed = await gzipBase64({
           sales: payload.sales || [],
           expenses: payload.expenses || [],
@@ -1683,6 +1726,8 @@
       clearTimeout(saveTimer);
       saveTimer = setTimeout(async () => {
         try {
+          // Saving without a successful load could overwrite cloud data with an incomplete copy
+          if (!state.sync.cloudLoaded) throw new Error('Cloud data not loaded yet');
           await api.save({ schema: CONFIG.SCHEMA_VERSION, sales: state.sales, expenses: state.expenses, stock: state.stock });
           state.sync.localDirty = false;
           state.sync.changedDuringLoad = false;
@@ -3054,6 +3099,7 @@
       setSync('syncing', 'Loading…');
       try {
         const data = await api.load();
+        state.sync.cloudLoaded = true;
         const remote = (data.sales || []).map(normaliseSale);
         const remoteExp = (data.expenses || []).map(normaliseExpense);
         const remoteStock = (data.stock || []).map(normaliseStockItem);
