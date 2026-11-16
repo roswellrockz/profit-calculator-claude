@@ -624,126 +624,16 @@
     [hidden] { display: none !important; }
 
     /* =========================================================================
-       MAIN SECTION TABS — Sales ↔ Expenses
-       ========================================================================= */
-    .main-tabs {
-      display: inline-flex;
-      gap: 4px;
-      padding: 4px;
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 999px;
-      box-shadow: var(--shadow-sm);
-      margin-bottom: 20px;
-    }
-    .main-tab {
-      padding: 8px 26px;
-      font-size: 13.5px;
-      font-weight: 600;
-      color: var(--ink-3);
-      border-radius: 999px;
-      transition: color var(--dur-1) var(--ease), background var(--dur-1) var(--ease);
-    }
-    .main-tab[aria-selected="true"] {
-      background: var(--accent-soft);
-      color: var(--accent-deep);
-    }
-    .main-tab:hover:not([aria-selected="true"]) { background: var(--bg-subtle); color: var(--ink); }
-    @media (max-width: 560px) {
-      .main-tabs { display: flex; max-width: 100%; overflow-x: auto; }
-      .main-tab { padding: 8px 12px; font-size: 12.5px; white-space: nowrap; }
-    }
-
-    /* =========================================================================
-       EXPENSE CATEGORY BADGES
-       ========================================================================= */
-    .cat-badge {
-      display: inline-flex; align-items: center;
-      padding: 3px 10px; border-radius: 999px;
-      font-size: 11px; font-weight: 600; letter-spacing: .01em;
-      white-space: nowrap;
-    }
-    .cat-storefee     { background: var(--accent-soft); color: var(--accent-deep); }
-    .cat-supplies     { background: var(--pos-soft); color: var(--pos-deep); }
-    .cat-postage      { background: var(--warn-soft); color: var(--warn); }
-    .cat-parts        { background: var(--teal-soft); color: var(--teal); }
-    .cat-mileage      { background: var(--purple-soft); color: var(--purple); }
-    .cat-subscription { background: var(--neg-soft); color: var(--neg); }
-    .cat-other        { background: var(--bg-subtle); color: var(--ink-2); }
-
-    /* =========================================================================
-       STOCK CATEGORY BADGES + LOW-STOCK STATES
-       ========================================================================= */
-    .cat-box        { background: var(--teal-soft); color: var(--teal); }
-    .cat-envelope   { background: var(--purple-soft); color: var(--purple); }
-    .cat-bubblewrap { background: var(--accent-soft); color: var(--accent-deep); }
-    .cat-tape       { background: var(--warn-soft); color: var(--warn); }
-
-    .stock-alert {
-      margin: 0 0 14px;
-      padding: 10px 14px;
-      border-radius: var(--radius-sm);
-      background: var(--warn-soft);
-      color: var(--warn);
-      font-size: 13px;
-      font-weight: 600;
-    }
-    tr.low-stock { background: var(--warn-soft); }
-    .low-badge {
-      display: inline-flex; align-items: center;
-      padding: 2px 8px; border-radius: 999px;
-      font-size: 10px; font-weight: 700;
-      background: var(--warn); color: #fff;
-      margin-left: 6px;
-    }
-
-    /* Stock cards — mobile layout, avoids the sideways scroll of the table.
-       Both markups render; CSS swaps them at the breakpoint. */
-    .stock-cards { display: none; }
-    @media (max-width: 700px) {
-      .stock-cards { display: grid; gap: 10px; }
-      #stock-body .table-wrap { display: none; }
-    }
-    .stock-card {
-      border: 1.5px solid var(--border);
-      border-radius: var(--radius-md);
-      background: var(--card);
-      padding: 14px;
-    }
-    .stock-card.low { background: var(--warn-soft); border-color: var(--warn); }
-    .stock-card-top {
-      display: flex; justify-content: space-between;
-      align-items: flex-start; gap: 10px; margin-bottom: 12px;
-    }
-    .stock-card-label { font-size: 16px; font-weight: 700; color: var(--ink); }
-    .stock-card-meta { font-size: 11.5px; color: var(--ink-3); margin-top: 4px; }
-    .stock-card-controls { display: flex; align-items: center; gap: 12px; }
-    .qty-btn {
-      width: 52px; height: 48px; flex: none;
-      border-radius: var(--radius-sm);
-      border: 1.5px solid var(--border-strong);
-      background: var(--card); color: var(--ink);
-      font-size: 26px; font-weight: 700; line-height: 1;
-      display: grid; place-items: center;
-    }
-    .qty-btn:active { background: var(--bg-subtle); }
-    .stock-card-qty {
-      flex: 1; text-align: center;
-      font-family: var(--font-mono); font-size: 26px; font-weight: 700;
-    }
-
-    /* =========================================================================
-       RECORD CARDS — mobile layout for sales history + expense log.
-       Same trick as the stock cards: both markups render, CSS swaps them
-       at the breakpoint so neither list needs a sideways scroll on a phone.
+       RECORD CARDS — mobile layout for sales history.
+       Both markups render; CSS swaps them at the breakpoint so the list
+       needs no sideways scroll on a phone.
        ========================================================================= */
     .record-cards { display: none; }
     .mobile-only { display: none; }
     @media (max-width: 700px) {
       .record-cards { display: grid; gap: 10px; }
       .mobile-only { display: block; }
-      #history-body .table-wrap,
-      #expenses-body .table-wrap { display: none; }
+      #history-body .table-wrap { display: none; }
     }
     .record-card {
       border: 1.5px solid var(--border);
@@ -769,7 +659,7 @@
       border-top: 1px solid var(--border);
     }
 
-    /* Headline number — profit for a sale, amount for an expense. */
+    /* Headline number — profit for a sale. */
     .record-card-headline {
       display: flex; align-items: baseline; justify-content: space-between;
       gap: 10px; margin-top: 12px; padding-top: 12px;
@@ -871,14 +761,6 @@
   </header>
 
   <div class="page">
-    <!-- ===================== SECTION TABS ===================== -->
-    <div class="main-tabs" role="tablist" aria-label="Section">
-      <button class="main-tab" role="tab" aria-selected="true" data-section="sales" type="button">Sales</button>
-      <button class="main-tab" role="tab" aria-selected="false" data-section="expenses" type="button">Expenses</button>
-      <button class="main-tab" role="tab" aria-selected="false" data-section="stock" type="button">Packing Supply Stock</button>
-    </div>
-
-    <!-- ===================== SALES VIEW ===================== -->
     <div id="view-sales">
     <!-- ===================== CALCULATOR + SNAPSHOT ===================== -->
     <div class="split">
@@ -1081,187 +963,6 @@
     </section>
     </div><!-- end view-sales -->
 
-    <!-- ===================== EXPENSES VIEW ===================== -->
-    <div id="view-expenses" hidden>
-      <div class="split">
-        <section class="card" aria-labelledby="exp-title">
-          <div class="card-header">
-            <div>
-              <div class="card-title">Track</div>
-              <h2 class="card-heading" id="exp-title">New expense</h2>
-            </div>
-          </div>
-          <form id="exp-form" autocomplete="off" novalidate>
-            <div class="form-grid">
-              <div class="field">
-                <label for="x-date">Date</label>
-                <input type="date" id="x-date" required />
-              </div>
-              <div class="field">
-                <label for="x-cat">Category</label>
-                <select id="x-cat">
-                  <option value="storefee">Store fee</option>
-                  <option value="supplies">Supplies</option>
-                  <option value="postage">Postage &amp; packaging</option>
-                  <option value="parts">Parts &amp; accessories</option>
-                  <option value="mileage">Mileage / sourcing</option>
-                  <option value="subscription">Subscriptions</option>
-                  <option value="other">Other</option>
-                </select>
-              </div>
-              <div class="field full">
-                <label for="x-desc">Description</label>
-                <input type="text" id="x-desc" maxlength="120" placeholder="e.g. eBay store fee — June" required />
-              </div>
-              <div class="field">
-                <label for="x-amount">Amount</label>
-                <div class="input-wrap currency">
-                  <span class="prefix">£</span>
-                  <input type="number" id="x-amount" min="0" step="0.01" inputmode="decimal" placeholder="0.00" required />
-                </div>
-              </div>
-            </div>
-            <div class="actions">
-              <button type="submit" class="btn btn-primary" id="btn-add-expense">Add expense</button>
-              <button type="reset" class="btn btn-ghost" id="btn-exp-reset">Reset</button>
-            </div>
-          </form>
-        </section>
-
-        <aside class="card" aria-labelledby="exp-snap-title">
-          <div class="card-header">
-            <div>
-              <div class="card-title">Overheads</div>
-              <h2 class="card-heading" id="exp-snap-title">Expenses snapshot</h2>
-            </div>
-          </div>
-          <div class="snapshot-grid">
-            <div class="stat"><div class="label">This month</div><div class="value small" id="xs-month">£0.00</div></div>
-            <div class="stat"><div class="label">This year</div><div class="value small" id="xs-year">£0.00</div></div>
-            <div class="stat"><div class="label">All time</div><div class="value small" id="xs-all">£0.00</div></div>
-            <div class="stat"><div class="label">Entries</div><div class="value small" id="xs-count">0</div></div>
-          </div>
-        </aside>
-      </div>
-
-      <section class="card" aria-labelledby="exp-log-title">
-        <div class="card-header">
-          <div>
-            <div class="card-title">Ledger</div>
-            <h2 class="card-heading" id="exp-log-title">Expense log</h2>
-          </div>
-        </div>
-
-        <div class="history-toolbar">
-          <div class="left">
-            <select id="x-filter-range" class="select-compact" aria-label="Date range">
-              <option value="all">All dates</option>
-              <option value="today">Today</option>
-              <option value="week">Last 7 days</option>
-              <option value="month">This month</option>
-              <option value="year">This year</option>
-            </select>
-            <select id="x-filter-cat" class="select-compact" aria-label="Category filter">
-              <option value="all">All categories</option>
-              <option value="storefee">Store fee</option>
-              <option value="supplies">Supplies</option>
-              <option value="postage">Postage &amp; packaging</option>
-              <option value="parts">Parts &amp; accessories</option>
-              <option value="mileage">Mileage / sourcing</option>
-              <option value="subscription">Subscriptions</option>
-              <option value="other">Other</option>
-            </select>
-          </div>
-          <div class="right">
-            <input
-              type="search"
-              id="x-filter-search"
-              placeholder="Search expenses…"
-              class="select-compact"
-              style="padding-right: 12px; background-image: none; min-width: 180px;"
-              aria-label="Search expenses"
-            />
-          </div>
-        </div>
-
-        <div id="expenses-body"></div>
-
-        <div class="table-footer">
-          <span class="count-note" id="x-count-note">No expenses yet.</span>
-          <div class="actions" style="margin: 0;">
-            <button class="btn btn-secondary" id="x-export" type="button">Export CSV</button>
-          </div>
-        </div>
-      </section>
-    </div><!-- end view-expenses -->
-
-    <!-- ===================== STOCK VIEW ===================== -->
-    <div id="view-stock" hidden>
-      <section class="card" aria-labelledby="stock-log-title" style="margin-bottom: 20px;">
-        <div class="card-header">
-          <div>
-            <div class="card-title">Ledger</div>
-            <h2 class="card-heading" id="stock-log-title">Packing supplies</h2>
-          </div>
-        </div>
-        <div id="stock-low-banner"></div>
-        <div id="stock-body"></div>
-      </section>
-
-      <div class="split">
-        <section class="card" aria-labelledby="stock-title">
-          <div class="card-header">
-            <div>
-              <div class="card-title">Track</div>
-              <h2 class="card-heading" id="stock-title">New stock item</h2>
-            </div>
-          </div>
-          <form id="stock-form" autocomplete="off" novalidate>
-            <div class="form-grid">
-              <div class="field">
-                <label for="st-cat">Category</label>
-                <select id="st-cat">
-                  <option value="box">Boxes</option>
-                  <option value="envelope">Bubble Envelopes</option>
-                  <option value="bubblewrap">Bubble Wrap</option>
-                  <option value="tape">Tape</option>
-                </select>
-              </div>
-              <div class="field">
-                <label for="st-label">Size / label</label>
-                <input type="text" id="st-label" maxlength="60" placeholder="e.g. 8x6x4" required />
-              </div>
-              <div class="field">
-                <label for="st-qty">Quantity in stock</label>
-                <input type="number" id="st-qty" min="0" step="1" placeholder="0" required />
-              </div>
-              <div class="field">
-                <label for="st-threshold">Low-stock alert at</label>
-                <input type="number" id="st-threshold" min="0" step="1" placeholder="10" value="10" />
-              </div>
-            </div>
-            <div class="actions">
-              <button type="submit" class="btn btn-primary" id="btn-add-stock">Add stock item</button>
-              <button type="reset" class="btn btn-ghost" id="btn-stock-reset">Reset</button>
-            </div>
-          </form>
-        </section>
-
-        <aside class="card" aria-labelledby="stock-snap-title">
-          <div class="card-header">
-            <div>
-              <div class="card-title">Overview</div>
-              <h2 class="card-heading" id="stock-snap-title">Stock snapshot</h2>
-            </div>
-          </div>
-          <div class="snapshot-grid" style="grid-template-columns: 1fr 1fr 1fr;">
-            <div class="stat"><div class="label">Item types</div><div class="value small" id="stk-types">0</div></div>
-            <div class="stat"><div class="label">Total units</div><div class="value small" id="stk-total">0</div></div>
-            <div class="stat accent"><div class="label">Running low</div><div class="value small" id="stk-low">0</div><div class="meta">Below alert level</div></div>
-          </div>
-        </aside>
-      </div>
-    </div><!-- end view-stock -->
   </div>
 
   <!-- ===================== EDIT MODAL ===================== -->
@@ -1331,102 +1032,6 @@
     </div>
   </div>
 
-  <!-- ===================== EXPENSE EDIT MODAL ===================== -->
-  <div class="modal-backdrop" id="exp-modal" role="dialog" aria-modal="true" aria-labelledby="exp-modal-title">
-    <div class="modal">
-      <header class="modal-header">
-        <h3 class="modal-title" id="exp-modal-title">Edit expense</h3>
-        <button class="modal-close" id="exp-modal-close" aria-label="Close" type="button">
-          <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
-            <path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round"/>
-          </svg>
-        </button>
-      </header>
-      <div class="modal-body">
-        <form id="exp-edit-form" autocomplete="off">
-          <div class="form-grid">
-            <div class="field">
-              <label for="ex-date">Date</label>
-              <input type="date" id="ex-date" required />
-            </div>
-            <div class="field">
-              <label for="ex-cat">Category</label>
-              <select id="ex-cat">
-                <option value="storefee">Store fee</option>
-                <option value="supplies">Supplies</option>
-                <option value="postage">Postage &amp; packaging</option>
-                <option value="parts">Parts &amp; accessories</option>
-                <option value="mileage">Mileage / sourcing</option>
-                <option value="subscription">Subscriptions</option>
-                <option value="other">Other</option>
-              </select>
-            </div>
-            <div class="field full">
-              <label for="ex-desc">Description</label>
-              <input type="text" id="ex-desc" maxlength="120" required />
-            </div>
-            <div class="field">
-              <label for="ex-amount">Amount</label>
-              <div class="input-wrap currency">
-                <span class="prefix">£</span>
-                <input type="number" id="ex-amount" min="0" step="0.01" inputmode="decimal" required />
-              </div>
-            </div>
-          </div>
-        </form>
-      </div>
-      <footer class="modal-footer">
-        <button class="btn btn-ghost" id="exp-modal-cancel" type="button">Cancel</button>
-        <button class="btn btn-primary" id="exp-modal-save" type="button">Save changes</button>
-      </footer>
-    </div>
-  </div>
-
-  <!-- ===================== STOCK EDIT MODAL ===================== -->
-  <div class="modal-backdrop" id="stock-modal" role="dialog" aria-modal="true" aria-labelledby="stock-modal-title">
-    <div class="modal">
-      <header class="modal-header">
-        <h3 class="modal-title" id="stock-modal-title">Edit stock item</h3>
-        <button class="modal-close" id="stock-modal-close" aria-label="Close" type="button">
-          <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
-            <path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round"/>
-          </svg>
-        </button>
-      </header>
-      <div class="modal-body">
-        <form id="stock-edit-form" autocomplete="off">
-          <div class="form-grid">
-            <div class="field">
-              <label for="est-cat">Category</label>
-              <select id="est-cat">
-                <option value="box">Boxes</option>
-                <option value="envelope">Bubble Envelopes</option>
-                <option value="bubblewrap">Bubble Wrap</option>
-                <option value="tape">Tape</option>
-              </select>
-            </div>
-            <div class="field">
-              <label for="est-label">Size / label</label>
-              <input type="text" id="est-label" maxlength="60" required />
-            </div>
-            <div class="field">
-              <label for="est-qty">Quantity</label>
-              <input type="number" id="est-qty" min="0" step="1" required />
-            </div>
-            <div class="field">
-              <label for="est-threshold">Low-stock alert at</label>
-              <input type="number" id="est-threshold" min="0" step="1" required />
-            </div>
-          </div>
-        </form>
-      </div>
-      <footer class="modal-footer">
-        <button class="btn btn-ghost" id="stock-modal-cancel" type="button">Cancel</button>
-        <button class="btn btn-primary" id="stock-modal-save" type="button">Save changes</button>
-      </footer>
-    </div>
-  </div>
-
   <!-- ===================== COMMENT MODAL ===================== -->
   <div class="modal-backdrop" id="note-modal" role="dialog" aria-modal="true" aria-labelledby="note-modal-title">
     <div class="modal">
@@ -1475,6 +1080,8 @@
      * ========================================================================= */
     const state = {
       sales: [],
+      // Expenses + packing stock no longer have a UI. They are still loaded and
+      // saved back untouched so the data already in the cloud bin is preserved.
       expenses: [],
       stock: [],
       sync: {
@@ -1493,14 +1100,7 @@
         editPlatform: 'ebay',
         monthKey: null,
         specificDate: null,
-        section: 'sales',
-        expRange: 'all',
-        expCat: 'all',
-        expSearch: '',
-        editingExpenseId: null,
-        editingStockId: null,
         editingNoteId: null,
-        noteKind: 'sale',
         sortCol: null,
         sortDir: 'desc',
       },
@@ -1772,63 +1372,6 @@
     }
 
     /* =========================================================================
-     * EXPENSES — model
-     * ========================================================================= */
-    const EXP_CATS = {
-      storefee: 'Store fee',
-      supplies: 'Supplies',
-      postage: 'Postage & packaging',
-      parts: 'Parts & accessories',
-      mileage: 'Mileage / sourcing',
-      subscription: 'Subscriptions',
-      other: 'Other',
-    };
-
-    function normaliseExpense(raw) {
-      return {
-        id:        raw.id || uid(),
-        date:      (raw.date || '').slice(0, 10) || todayISO(),
-        desc:      String(raw.desc || raw.description || 'Untitled').slice(0, 160),
-        category:  EXP_CATS[raw.category] ? raw.category : 'other',
-        amount:    parseNum(raw.amount),
-        note:      String(raw.note || '').slice(0, 500),
-        createdAt: raw.createdAt || new Date().toISOString(),
-      };
-    }
-
-    /* =========================================================================
-     * STOCK — model
-     * ========================================================================= */
-    const STOCK_CATS = {
-      box: 'Boxes',
-      envelope: 'Bubble Envelopes',
-      bubblewrap: 'Bubble Wrap',
-      tape: 'Tape',
-    };
-
-    function normaliseStockItem(raw) {
-      return {
-        id:        raw.id || uid(),
-        category:  STOCK_CATS[raw.category] ? raw.category : 'box',
-        label:     String(raw.label || raw.size || 'Item').slice(0, 60),
-        qty:       Math.max(0, Math.round(parseNum(raw.qty))),
-        threshold: Math.max(0, Math.round(parseNum(raw.threshold))),
-        createdAt: raw.createdAt || new Date().toISOString(),
-      };
-    }
-
-    function seedDefaultStock() {
-      const now = new Date().toISOString();
-      state.stock = [
-        { id: 'seed_box_8x6x4',   category: 'box',        label: '8x6x4',    qty: 31, threshold: 10, createdAt: now },
-        { id: 'seed_box_12x9x6',  category: 'box',        label: '12x9x6',   qty: 40, threshold: 10, createdAt: now },
-        { id: 'seed_envelope_std', category: 'envelope',   label: 'Standard', qty: 96, threshold: 20, createdAt: now },
-        { id: 'seed_bubblewrap',  category: 'bubblewrap',  label: 'Roll',     qty: 0,  threshold: 5,  createdAt: now },
-        { id: 'seed_tape',        category: 'tape',        label: 'Roll',     qty: 0,  threshold: 5,  createdAt: now },
-      ];
-    }
-
-    /* =========================================================================
      * FILTERING
      * ========================================================================= */
     function inRange(dateStr, range) {
@@ -1890,8 +1433,6 @@
       renderLivePreview();
       renderSnapshot();
       renderHistory();
-      renderExpenses();
-      renderStock();
     }
 
     function renderLivePreview() {
@@ -2316,459 +1857,14 @@
     }
 
     /* =========================================================================
-     * EXPENSES — render + actions
-     * ========================================================================= */
-    const sumExpenses = (list) => list.reduce((t, x) => t + x.amount, 0);
-
-    function filterExpenses() {
-      const q = state.ui.expSearch.trim().toLowerCase();
-      return state.expenses.filter((x) =>
-        inRange(x.date, state.ui.expRange) &&
-        (state.ui.expCat === 'all' || x.category === state.ui.expCat) &&
-        (q === '' || (x.desc || '').toLowerCase().includes(q))
-      );
-    }
-
-    /* Shared by the desktop table row and the mobile card. */
-    function expenseActions(x) {
-      return `
-        <div class="row-actions">
-          <button class="icon-btn" data-action="edit-exp" data-id="${x.id}" title="Edit" aria-label="Edit expense">
-            <svg viewBox="0 0 16 16"><path d="M11 2l3 3-8 8H3v-3l8-8z" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linejoin="round"/></svg>
-          </button>
-          <button class="icon-btn ${x.note ? 'has-note' : ''}" data-action="note-exp" data-id="${x.id}" title="${x.note ? 'Edit comment' : 'Add comment'}" aria-label="Comment">
-            ${x.note
-              ? '<svg viewBox="0 0 16 16"><path d="M2 3.5A1.5 1.5 0 013.5 2h9A1.5 1.5 0 0114 3.5v6A1.5 1.5 0 0112.5 11H6l-3 3v-3H3.5A1.5 1.5 0 012 9.5v-6z" fill="currentColor"/></svg>'
-              : '<svg viewBox="0 0 16 16"><path d="M2 3.5A1.5 1.5 0 013.5 2h9A1.5 1.5 0 0114 3.5v6A1.5 1.5 0 0112.5 11H6l-3 3v-3H3.5A1.5 1.5 0 012 9.5v-6z" stroke="currentColor" stroke-width="1.4" fill="none" stroke-linejoin="round"/></svg>'}
-          </button>
-          <button class="icon-btn danger" data-action="del-exp" data-id="${x.id}" title="Delete" aria-label="Delete expense">
-            <svg viewBox="0 0 16 16"><path d="M3 4h10M6 4V2h4v2M4 4l1 10h6l1-10" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          </button>
-        </div>`;
-    }
-
-    function renderExpenses() {
-      $('#xs-month').textContent = fmtGBP(sumExpenses(state.expenses.filter((x) => inRange(x.date, 'month'))));
-      $('#xs-year').textContent  = fmtGBP(sumExpenses(state.expenses.filter((x) => inRange(x.date, 'year'))));
-      $('#xs-all').textContent   = fmtGBP(sumExpenses(state.expenses));
-      $('#xs-count').textContent = String(state.expenses.length);
-
-      const filtered = [...filterExpenses()].sort((a, b) =>
-        a.date < b.date ? 1 : a.date > b.date ? -1 : a.createdAt < b.createdAt ? 1 : a.createdAt > b.createdAt ? -1 : 0
-      );
-      const body = $('#expenses-body');
-      const note = $('#x-count-note');
-
-      if (filtered.length === 0) {
-        body.innerHTML = `
-          <div class="empty">
-            <h3>No expenses yet</h3>
-            <p>${state.expenses.length === 0
-              ? 'Log your first business expense above.'
-              : 'No expenses match the current filters.'}</p>
-          </div>`;
-        note.textContent = state.expenses.length === 0 ? 'No expenses yet.' : '0 of ' + state.expenses.length;
-        return;
-      }
-
-      note.textContent = `${filtered.length} of ${state.expenses.length} ${state.expenses.length === 1 ? 'expense' : 'expenses'} · ${fmtGBP(sumExpenses(filtered))} total`;
-
-      const rows = filtered.map((x) => `
-        <tr>
-          <td>${esc(x.date)}</td>
-          <td class="item-cell" title="${esc(x.desc)}">${esc(x.desc)}</td>
-          <td><span class="cat-badge cat-${esc(x.category)}">${esc(EXP_CATS[x.category] || 'Other')}</span></td>
-          <td class="num neg">${fmtSignedGBP(x.amount, { subtract: true })}</td>
-          <td>${expenseActions(x)}</td>
-        </tr>
-      `).join('');
-
-      const cards = filtered.map((x) => `
-        <div class="record-card">
-          <div class="record-card-top">
-            <div>
-              <div class="record-card-title">${esc(x.desc)}</div>
-              <div class="record-card-sub">${esc(x.date)}</div>
-              <div class="record-card-tags">
-                <span class="cat-badge cat-${esc(x.category)}">${esc(EXP_CATS[x.category] || 'Other')}</span>
-              </div>
-            </div>
-          </div>
-          <div class="record-card-headline">
-            <span class="label">Amount</span>
-            <span class="value neg">${fmtSignedGBP(x.amount, { subtract: true })}</span>
-          </div>
-          <div class="record-card-actions">${expenseActions(x)}</div>
-        </div>
-      `).join('');
-
-      body.innerHTML = `
-        <div class="record-cards">${cards}</div>
-        <div class="table-wrap">
-          <table class="sales" style="min-width: 640px;">
-            <thead>
-              <tr>
-                <th>Date</th>
-                <th>Description</th>
-                <th>Category</th>
-                <th class="num">Amount</th>
-                <th><span class="sr-only">Actions</span></th>
-              </tr>
-            </thead>
-            <tbody>${rows}</tbody>
-          </table>
-        </div>`;
-
-      $$('[data-action="del-exp"]', body).forEach((btn) =>
-        btn.addEventListener('click', () => deleteExpense(btn.dataset.id))
-      );
-      $$('[data-action="edit-exp"]', body).forEach((btn) =>
-        btn.addEventListener('click', () => openExpenseEdit(btn.dataset.id))
-      );
-      $$('[data-action="note-exp"]', body).forEach((btn) =>
-        btn.addEventListener('click', () => openExpenseNote(btn.dataset.id))
-      );
-    }
-
-    function addExpense({ date, desc, category, amount }) {
-      state.expenses.push({
-        id: uid(),
-        date,
-        desc: desc.trim(),
-        category,
-        amount,
-        createdAt: new Date().toISOString(),
-      });
-      renderExpenses();
-      scheduleSync();
-      toast('Expense logged', 'success');
-    }
-
-    function deleteExpense(id) {
-      const i = state.expenses.findIndex((x) => x.id === id);
-      if (i === -1) return;
-      if (!confirm(`Delete "${state.expenses[i].desc}"?`)) return;
-      state.expenses.splice(i, 1);
-      renderExpenses();
-      scheduleSync();
-    }
-
-    function exportExpensesCSV() {
-      if (state.expenses.length === 0) {
-        toast('Nothing to export yet', 'error');
-        return;
-      }
-      const header = ['Date', 'Description', 'Category', 'Amount'];
-      const rows = [...state.expenses]
-        .sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : a.createdAt < b.createdAt ? 1 : a.createdAt > b.createdAt ? -1 : 0))
-        .map((x) => [
-          x.date,
-          `"${x.desc.replace(/"/g, '""')}"`,
-          EXP_CATS[x.category] || 'Other',
-          x.amount.toFixed(2),
-        ].join(','));
-      const csv = [header.join(','), ...rows].join('\n');
-      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `expenses_${todayISO()}.csv`;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(url);
-    }
-
-    function handleExpenseSubmit(e) {
-      e.preventDefault();
-      const date = $('#x-date').value;
-      const desc = $('#x-desc').value.trim();
-      const category = $('#x-cat').value;
-      const amount = parseNum($('#x-amount').value);
-
-      if (!date) { toast('Pick a date', 'error'); return; }
-      if (!desc) { toast('Describe the expense', 'error'); return; }
-      if (amount <= 0) { toast('Enter an amount', 'error'); return; }
-
-      addExpense({ date, desc, category, amount });
-
-      $('#x-desc').value = '';
-      $('#x-amount').value = '';
-      $('#x-desc').focus();
-    }
-
-    /* =========================================================================
-     * EXPENSES — edit modal
-     * ========================================================================= */
-    function openExpenseEdit(id) {
-      const x = state.expenses.find((e) => e.id === id);
-      if (!x) return;
-      state.ui.editingExpenseId = id;
-
-      $('#ex-date').value = x.date;
-      $('#ex-cat').value = EXP_CATS[x.category] ? x.category : 'other';
-      $('#ex-desc').value = x.desc;
-      $('#ex-amount').value = x.amount;
-
-      $('#exp-modal').setAttribute('data-open', 'true');
-      document.body.style.overflow = 'hidden';
-      setTimeout(() => $('#ex-desc').focus(), 50);
-    }
-
-    function closeExpenseEdit() {
-      $('#exp-modal').setAttribute('data-open', 'false');
-      document.body.style.overflow = '';
-      state.ui.editingExpenseId = null;
-    }
-
-    function saveExpenseEdit() {
-      const id = state.ui.editingExpenseId;
-      if (!id) return;
-      const i = state.expenses.findIndex((e) => e.id === id);
-      if (i === -1) return;
-
-      const date = $('#ex-date').value;
-      const desc = $('#ex-desc').value.trim();
-      const category = EXP_CATS[$('#ex-cat').value] ? $('#ex-cat').value : 'other';
-      const amount = parseNum($('#ex-amount').value);
-
-      if (!date) { toast('Pick a date', 'error'); return; }
-      if (!desc) { toast('Describe the expense', 'error'); return; }
-      if (amount <= 0) { toast('Enter an amount', 'error'); return; }
-
-      state.expenses[i] = { ...state.expenses[i], date, desc, category, amount };
-      renderExpenses();
-      scheduleSync();
-      closeExpenseEdit();
-      toast('Expense updated', 'success');
-    }
-
-    /* =========================================================================
-     * STOCK — render + actions
-     * ========================================================================= */
-    function renderStock() {
-      const sorted = [...state.stock].sort((a, b) =>
-        (STOCK_CATS[a.category] || '').localeCompare(STOCK_CATS[b.category] || '') ||
-        a.label.localeCompare(b.label)
-      );
-      const low = sorted.filter((x) => x.qty <= x.threshold);
-
-      $('#stk-types').textContent = String(state.stock.length);
-      $('#stk-total').textContent = String(state.stock.reduce((t, x) => t + x.qty, 0));
-      $('#stk-low').textContent   = String(low.length);
-
-      const banner = $('#stock-low-banner');
-      banner.innerHTML = low.length
-        ? `<div class="stock-alert">⚠ ${low.length} item${low.length === 1 ? '' : 's'} running low: ${
-            low.map((x) => esc(`${STOCK_CATS[x.category]} — ${x.label}`)).join(', ')
-          }</div>`
-        : '';
-
-      const body = $('#stock-body');
-
-      if (sorted.length === 0) {
-        body.innerHTML = `
-          <div class="empty">
-            <h3>No stock tracked yet</h3>
-            <p>Add your boxes, envelopes, bubble wrap and tape above.</p>
-          </div>`;
-        return;
-      }
-
-      const rows = sorted.map((x) => `
-        <tr class="${x.qty <= x.threshold ? 'low-stock' : ''}">
-          <td><span class="cat-badge cat-${esc(x.category)}">${esc(STOCK_CATS[x.category] || 'Other')}</span></td>
-          <td>${esc(x.label)}</td>
-          <td class="num">${x.qty}${x.qty <= x.threshold ? '<span class="low-badge">Low</span>' : ''}</td>
-          <td class="num">${x.threshold}</td>
-          <td>
-            <div class="row-actions">
-              <button class="icon-btn" data-action="stock-minus" data-id="${x.id}" title="Use one" aria-label="Decrease quantity" style="font-weight:700;font-size:15px;">−</button>
-              <button class="icon-btn" data-action="stock-plus" data-id="${x.id}" title="Restock one" aria-label="Increase quantity" style="font-weight:700;font-size:15px;">+</button>
-              <button class="icon-btn" data-action="stock-edit" data-id="${x.id}" title="Edit" aria-label="Edit item">
-                <svg viewBox="0 0 16 16"><path d="M11 2l3 3-8 8H3v-3l8-8z" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linejoin="round"/></svg>
-              </button>
-              <button class="icon-btn danger" data-action="stock-delete" data-id="${x.id}" title="Delete" aria-label="Delete item">
-                <svg viewBox="0 0 16 16"><path d="M3 4h10M6 4V2h4v2M4 4l1 10h6l1-10" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
-              </button>
-            </div>
-          </td>
-        </tr>
-      `).join('');
-
-      const cards = sorted.map((x) => `
-        <div class="stock-card ${x.qty <= x.threshold ? 'low' : ''}">
-          <div class="stock-card-top">
-            <div>
-              <div class="stock-card-label">${esc(x.label)}${x.qty <= x.threshold ? '<span class="low-badge">Low</span>' : ''}</div>
-              <div class="stock-card-meta">${esc(STOCK_CATS[x.category] || 'Other')} · alert at ${x.threshold}</div>
-            </div>
-            <div class="row-actions">
-              <button class="icon-btn" data-action="stock-edit" data-id="${x.id}" title="Edit" aria-label="Edit item">
-                <svg viewBox="0 0 16 16"><path d="M11 2l3 3-8 8H3v-3l8-8z" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linejoin="round"/></svg>
-              </button>
-              <button class="icon-btn danger" data-action="stock-delete" data-id="${x.id}" title="Delete" aria-label="Delete item">
-                <svg viewBox="0 0 16 16"><path d="M3 4h10M6 4V2h4v2M4 4l1 10h6l1-10" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
-              </button>
-            </div>
-          </div>
-          <div class="stock-card-controls">
-            <button class="qty-btn" data-action="stock-minus" data-id="${x.id}" aria-label="Use one ${esc(x.label)}">−</button>
-            <span class="stock-card-qty">${x.qty}</span>
-            <button class="qty-btn" data-action="stock-plus" data-id="${x.id}" aria-label="Restock one ${esc(x.label)}">+</button>
-          </div>
-        </div>
-      `).join('');
-
-      body.innerHTML = `
-        <div class="stock-cards">${cards}</div>
-        <div class="table-wrap">
-          <table class="sales">
-            <thead>
-              <tr>
-                <th>Category</th>
-                <th>Size / label</th>
-                <th class="num">Qty</th>
-                <th class="num">Alert at</th>
-                <th><span class="sr-only">Actions</span></th>
-              </tr>
-            </thead>
-            <tbody>${rows}</tbody>
-          </table>
-        </div>`;
-
-      $$('[data-action="stock-minus"]', body).forEach((b) =>
-        b.addEventListener('click', () => adjustStockQty(b.dataset.id, -1))
-      );
-      $$('[data-action="stock-plus"]', body).forEach((b) =>
-        b.addEventListener('click', () => adjustStockQty(b.dataset.id, 1))
-      );
-      $$('[data-action="stock-edit"]', body).forEach((b) =>
-        b.addEventListener('click', () => openStockEdit(b.dataset.id))
-      );
-      $$('[data-action="stock-delete"]', body).forEach((b) =>
-        b.addEventListener('click', () => deleteStockItem(b.dataset.id))
-      );
-    }
-
-    function addStockItem({ category, label, qty, threshold }) {
-      state.stock.push({
-        id: uid(),
-        category,
-        label: label.trim(),
-        qty: Math.max(0, Math.round(qty)),
-        threshold: Math.max(0, Math.round(threshold)),
-        createdAt: new Date().toISOString(),
-      });
-      renderAll();
-      scheduleSync();
-      toast('Stock item added', 'success');
-    }
-
-    function adjustStockQty(id, delta) {
-      const item = state.stock.find((x) => x.id === id);
-      if (!item) return;
-      item.qty = Math.max(0, item.qty + delta);
-      renderAll();
-      scheduleSync();
-    }
-
-    function deleteStockItem(id) {
-      const i = state.stock.findIndex((x) => x.id === id);
-      if (i === -1) return;
-      if (!confirm(`Delete "${state.stock[i].label}"?`)) return;
-      state.stock.splice(i, 1);
-      renderAll();
-      scheduleSync();
-    }
-
-    function updateStockItem(id, patch) {
-      const item = state.stock.find((x) => x.id === id);
-      if (!item) return;
-      Object.assign(item, patch);
-      renderAll();
-      scheduleSync();
-    }
-
-    function handleStockSubmit(e) {
-      e.preventDefault();
-      const category = $('#st-cat').value;
-      const label = $('#st-label').value.trim();
-      const qty = parseNum($('#st-qty').value);
-      const threshold = parseNum($('#st-threshold').value) || 0;
-
-      if (!label) { toast('Enter a size or label', 'error'); return; }
-
-      addStockItem({ category, label, qty, threshold });
-
-      $('#st-label').value = '';
-      $('#st-qty').value = '';
-      $('#st-threshold').value = '10';
-      $('#st-label').focus();
-    }
-
-    /* =========================================================================
-     * STOCK — edit modal
-     * ========================================================================= */
-    function openStockEdit(id) {
-      const item = state.stock.find((x) => x.id === id);
-      if (!item) return;
-      state.ui.editingStockId = id;
-
-      $('#est-cat').value = item.category;
-      $('#est-label').value = item.label;
-      $('#est-qty').value = item.qty;
-      $('#est-threshold').value = item.threshold;
-
-      $('#stock-modal').setAttribute('data-open', 'true');
-      document.body.style.overflow = 'hidden';
-      setTimeout(() => $('#est-label').focus(), 50);
-    }
-
-    function closeStockEdit() {
-      $('#stock-modal').setAttribute('data-open', 'false');
-      document.body.style.overflow = '';
-      state.ui.editingStockId = null;
-    }
-
-    function saveStockEdit() {
-      const id = state.ui.editingStockId;
-      if (!id) return;
-
-      const category = $('#est-cat').value;
-      const label = $('#est-label').value.trim();
-      const qty = parseNum($('#est-qty').value);
-      const threshold = parseNum($('#est-threshold').value) || 0;
-
-      if (!label) { toast('Enter a size or label', 'error'); return; }
-
-      updateStockItem(id, { category, label, qty, threshold });
-      closeStockEdit();
-      toast('Stock item updated', 'success');
-    }
-
-    /* =========================================================================
-     * COMMENT MODAL — shared by sales + expenses
+     * COMMENT MODAL
      * ========================================================================= */
     function openNote(id) {
       const s = state.sales.find((x) => x.id === id);
       if (!s) return;
       state.ui.editingNoteId = id;
-      state.ui.noteKind = 'sale';
       $('#note-subject').textContent = `Note for "${s.name}"`;
       $('#note-text').value = s.note || '';
-      $('#note-modal').setAttribute('data-open', 'true');
-      document.body.style.overflow = 'hidden';
-      setTimeout(() => $('#note-text').focus(), 50);
-    }
-
-    function openExpenseNote(id) {
-      const x = state.expenses.find((e) => e.id === id);
-      if (!x) return;
-      state.ui.editingNoteId = id;
-      state.ui.noteKind = 'expense';
-      $('#note-subject').textContent = `Note for "${x.desc}"`;
-      $('#note-text').value = x.note || '';
       $('#note-modal').setAttribute('data-open', 'true');
       document.body.style.overflow = 'hidden';
       setTimeout(() => $('#note-text').focus(), 50);
@@ -2783,29 +1879,13 @@
     function saveNote() {
       const id = state.ui.editingNoteId;
       if (!id) return;
-      const list = state.ui.noteKind === 'expense' ? state.expenses : state.sales;
-      const item = list.find((x) => x.id === id);
+      const item = state.sales.find((x) => x.id === id);
       if (!item) return;
       item.note = $('#note-text').value.trim().slice(0, 500);
-      if (state.ui.noteKind === 'expense') renderExpenses();
-      else renderHistory();
+      renderHistory();
       scheduleSync();
       closeNote();
       toast(item.note ? 'Comment saved' : 'Comment cleared', 'success');
-    }
-
-    /* =========================================================================
-     * SECTION TOGGLE — Sales ↔ Expenses
-     * ========================================================================= */
-    function switchSection(name) {
-      state.ui.section = name;
-      localStorage.setItem('active_section', name);
-      $$('.main-tabs [data-section]').forEach((t) =>
-        t.setAttribute('aria-selected', String(t.dataset.section === name))
-      );
-      $('#view-sales').hidden = name !== 'sales';
-      $('#view-expenses').hidden = name !== 'expenses';
-      $('#view-stock').hidden = name !== 'stock';
     }
 
     /* =========================================================================
@@ -2927,46 +2007,6 @@
      * ========================================================================= */
     async function init() {
       $('#f-date').value = todayISO();
-      $('#x-date').value = todayISO();
-
-      // Restore last active tab
-      const savedSection = localStorage.getItem('active_section');
-      if (savedSection === 'expenses') switchSection('expenses');
-      if (savedSection === 'stock') switchSection('stock');
-
-      // Section tabs (Sales ↔ Expenses)
-      $$('.main-tabs [data-section]').forEach((tab) => {
-        tab.addEventListener('click', () => switchSection(tab.dataset.section));
-      });
-
-      // Expense form + filters + export
-      $('#exp-form').addEventListener('submit', handleExpenseSubmit);
-      $('#btn-exp-reset').addEventListener('click', () => {
-        setTimeout(() => { $('#x-date').value = todayISO(); }, 0);
-      });
-      $('#x-filter-range').addEventListener('change', (e) => {
-        state.ui.expRange = e.target.value; renderExpenses();
-      });
-      $('#x-filter-cat').addEventListener('change', (e) => {
-        state.ui.expCat = e.target.value; renderExpenses();
-      });
-      $('#x-filter-search').addEventListener('input', (e) => {
-        state.ui.expSearch = e.target.value; renderExpenses();
-      });
-      $('#x-export').addEventListener('click', exportExpensesCSV);
-
-      // Stock form
-      $('#stock-form').addEventListener('submit', handleStockSubmit);
-      $('#stock-modal-close').addEventListener('click', closeStockEdit);
-      $('#stock-modal-cancel').addEventListener('click', closeStockEdit);
-      $('#stock-modal-save').addEventListener('click', saveStockEdit);
-      $('#stock-modal').addEventListener('click', (e) => {
-        if (e.target.id === 'stock-modal') closeStockEdit();
-      });
-      $('#stock-edit-form').addEventListener('submit', (e) => { e.preventDefault(); saveStockEdit(); });
-      document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && $('#stock-modal').getAttribute('data-open') === 'true') closeStockEdit();
-      });
 
       // Calculator platform tabs
       $$('.tabs [data-platform]').forEach((tab) => {
@@ -3049,18 +2089,6 @@
         if (e.key === 'Escape' && $('#modal').getAttribute('data-open') === 'true') closeEdit();
       });
 
-      // Expense edit modal bindings
-      $('#exp-modal-close').addEventListener('click', closeExpenseEdit);
-      $('#exp-modal-cancel').addEventListener('click', closeExpenseEdit);
-      $('#exp-modal-save').addEventListener('click', saveExpenseEdit);
-      $('#exp-modal').addEventListener('click', (e) => {
-        if (e.target.id === 'exp-modal') closeExpenseEdit();
-      });
-      $('#exp-edit-form').addEventListener('submit', (e) => { e.preventDefault(); saveExpenseEdit(); });
-      document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && $('#exp-modal').getAttribute('data-open') === 'true') closeExpenseEdit();
-      });
-
       // Comment modal bindings
       $('#note-modal-close').addEventListener('click', closeNote);
       $('#note-modal-cancel').addEventListener('click', closeNote);
@@ -3073,6 +2101,7 @@
       });
 
       // Show cached data instantly while cloud loads
+      const asList = (v) => (Array.isArray(v) ? v : []);
       const local = localStorage.getItem('sales_local');
       const localExp = localStorage.getItem('expenses_local');
       const localStock = localStorage.getItem('stock_local');
@@ -3085,12 +2114,12 @@
       }
       if (localExp) {
         try {
-          state.expenses = JSON.parse(localExp).map(normaliseExpense);
+          state.expenses = asList(JSON.parse(localExp));
         } catch (e) { /* corrupt cache — ignore and wait for cloud */ }
       }
       if (localStock) {
         try {
-          state.stock = JSON.parse(localStock).map(normaliseStockItem);
+          state.stock = asList(JSON.parse(localStock));
         } catch (e) { /* corrupt cache — ignore and wait for cloud */ }
       }
       renderAll();
@@ -3101,8 +2130,8 @@
         const data = await api.load();
         state.sync.cloudLoaded = true;
         const remote = (data.sales || []).map(normaliseSale);
-        const remoteExp = (data.expenses || []).map(normaliseExpense);
-        const remoteStock = (data.stock || []).map(normaliseStockItem);
+        const remoteExp = asList(data.expenses);
+        const remoteStock = asList(data.stock);
         if (state.sync.localDirty || state.sync.changedDuringLoad) {
           // Merge: local unsaved changes win per-ID, but keep any remote-only entries
           const mergeById = (localList, remoteList) => {
@@ -3130,13 +2159,6 @@
           localStorage.setItem('stock_local', JSON.stringify(state.stock));
           writeSyncMeta({ dirty: false, syncedAt: new Date().toISOString() });
           setSync('ok', 'Synced');
-        }
-
-        // First-ever run of the stock tracker: seed starting quantities once,
-        // then sync so every device converges on the same seeded data.
-        if (!localStock && remoteStock.length === 0 && state.stock.length === 0) {
-          seedDefaultStock();
-          scheduleSync();
         }
       } catch (err) {
         console.error(err);
