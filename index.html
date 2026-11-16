@@ -16,7 +16,7 @@
 
   <style>
     /* =========================================================================
-       DESIGN TOKENS
+       DESIGN TOKENS — every colour used on the page is defined here.
        ========================================================================= */
     :root {
       --bg: #f1f5f9;
@@ -24,9 +24,14 @@
       --card: #ffffff;
       --border: #e2e8f0;
       --border-strong: #cbd5e1;
+      --row-hover: #f8fafc;
+      --shadow-xs: 0 1px 2px rgba(15,23,42,.05);
       --shadow-sm: 0 1px 4px rgba(15,23,42,.07), 0 1px 2px rgba(15,23,42,.04);
       --shadow-md: 0 4px 20px rgba(15,23,42,.10), 0 2px 6px rgba(15,23,42,.05);
       --shadow-lg: 0 24px 60px rgba(15,23,42,.18), 0 8px 20px rgba(15,23,42,.08);
+      --shadow-tab: 0 1px 3px rgba(15,23,42,.1);
+      --shadow-nav: 0 -4px 20px rgba(15,23,42,.08);
+      --backdrop: rgba(15,23,42,.55);
 
       --ink: #0f172a;
       --ink-2: #334155;
@@ -37,16 +42,22 @@
       --accent-hover: #1d4ed8;
       --accent-soft: #eff6ff;
       --accent-ring: rgba(37,99,235,.18);
+      --accent-shadow: 0 2px 10px rgba(37,99,235,.4);
 
       --pos: #059669;
       --pos-soft: #ecfdf5;
       --neg: #dc2626;
       --neg-soft: #fef2f2;
+      --neg-border: rgba(220,38,38,.3);
       --warn: #d97706;
       --warn-soft: #fffbeb;
 
       --ebay: #1a56db;
+      --ebay-soft: #dbeafe;
+      --ebay-ink: #1e40af;
       --vinted: #0d9068;
+      --vinted-soft: #d1fae5;
+      --vinted-ink: #065f46;
 
       --accent-deep: #1d4ed8;
       --pos-deep: #047857;
@@ -54,6 +65,22 @@
       --teal-soft: #ccfbf1;
       --purple: #7c3aed;
       --purple-soft: #f3e8ff;
+
+      /* Dark surfaces: top bar, headline band, profit total, toasts */
+      --hero-bg: #0f172a;
+      --hero-bg-2: #1e293b;
+      --on-dark: #ffffff;
+      --on-dark-2: rgba(255,255,255,.66);
+      --on-dark-3: rgba(255,255,255,.45);
+      --on-dark-fill: rgba(255,255,255,.07);
+      --on-dark-fill-strong: rgba(255,255,255,.14);
+      --on-dark-border: rgba(255,255,255,.12);
+      --pos-bright: #34d399;
+      --pos-bright-ring: rgba(52,211,153,.2);
+      --neg-bright: #f87171;
+      --warn-bright: #fbbf24;
+
+      --bar-idle: #cbd5e1;
 
       --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
       --font-mono: 'DM Mono', 'SF Mono', ui-monospace, Menlo, monospace;
@@ -95,11 +122,11 @@
     ::selection { background: var(--accent-soft); color: var(--accent); }
 
     /* =========================================================================
-       TOPBAR — full-width dark header
+       TOPBAR — brand, screen navigation, sync status, primary "Add sale" action
        ========================================================================= */
     .topbar {
-      background: #0f172a;
-      border-bottom: 1px solid rgba(255,255,255,.06);
+      background: var(--hero-bg);
+      border-bottom: 1px solid var(--on-dark-border);
       position: sticky;
       top: 0;
       z-index: 40;
@@ -111,39 +138,37 @@
       height: 60px;
       display: flex;
       align-items: center;
-      justify-content: space-between;
+      gap: 20px;
     }
-    .brand {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
+    .brand { display: flex; align-items: center; gap: 12px; }
     .brand-mark {
       width: 36px; height: 36px;
       border-radius: 9px;
-      background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-      color: #fff;
+      background: var(--accent);
+      color: var(--on-dark);
       display: grid; place-items: center;
       flex-shrink: 0;
-      box-shadow: 0 2px 8px rgba(37,99,235,.5);
+      box-shadow: var(--accent-shadow);
     }
-    .brand-text {
-      display: flex;
-      flex-direction: column;
-      line-height: 1.2;
+    .brand-text { display: flex; flex-direction: column; line-height: 1.2; }
+    .brand-text strong { font-size: 15px; font-weight: 700; letter-spacing: -0.02em; color: var(--on-dark); }
+    .brand-text span { font-size: 11.5px; color: var(--on-dark-3); font-weight: 400; }
+
+    .main-nav { display: flex; gap: 4px; margin-left: 12px; }
+    .nav-link {
+      display: inline-flex; align-items: center; gap: 7px;
+      padding: 7px 14px;
+      border-radius: 999px;
+      font-size: 13px; font-weight: 600;
+      color: var(--on-dark-2);
+      transition: color var(--dur-1) var(--ease), background var(--dur-1) var(--ease);
     }
-    .brand-text strong {
-      font-size: 15px;
-      font-weight: 700;
-      letter-spacing: -0.02em;
-      color: #fff;
-    }
-    .brand-text span {
-      font-size: 11.5px;
-      color: rgba(255,255,255,.45);
-      font-weight: 400;
-    }
-    .sync-wrap { display: flex; align-items: center; }
+    .nav-link svg { width: 15px; height: 15px; }
+    .nav-link:hover { color: var(--on-dark); background: var(--on-dark-fill); }
+    .nav-link[aria-current="page"] { color: var(--on-dark); background: var(--on-dark-fill-strong); }
+    .nav-link:focus-visible, .btn-add:focus-visible, .chip:focus-visible { outline-color: var(--on-dark); border-radius: 999px; }
+
+    .topbar-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
     .sync {
       display: inline-flex;
       align-items: center;
@@ -152,39 +177,149 @@
       border-radius: 999px;
       font-size: 12px;
       font-weight: 500;
-      color: rgba(255,255,255,.65);
-      background: rgba(255,255,255,.08);
-      border: 1px solid rgba(255,255,255,.12);
+      color: var(--on-dark-2);
+      background: var(--on-dark-fill);
+      border: 1px solid var(--on-dark-border);
+      white-space: nowrap;
     }
     .sync .dot {
       width: 6px; height: 6px; border-radius: 50%;
-      background: rgba(255,255,255,.3);
+      background: var(--on-dark-3);
       flex-shrink: 0;
     }
-    .sync[data-state="ok"] .dot { background: #34d399; box-shadow: 0 0 0 3px rgba(52,211,153,.2); }
-    .sync[data-state="syncing"] .dot { background: #fbbf24; animation: pulse 1.3s var(--ease) infinite; }
-    .sync[data-state="error"] .dot { background: #f87171; }
+    .sync[data-state="ok"] .dot { background: var(--pos-bright); box-shadow: 0 0 0 3px var(--pos-bright-ring); }
+    .sync[data-state="syncing"] .dot { background: var(--warn-bright); animation: pulse 1.3s var(--ease) infinite; }
+    .sync[data-state="error"] .dot { background: var(--neg-bright); }
     @keyframes pulse {
       0%,100% { opacity:1; transform:scale(1); }
       50% { opacity:.5; transform:scale(.8); }
     }
+    .btn-add {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 8px 16px;
+      border-radius: 999px;
+      background: var(--accent);
+      color: var(--on-dark);
+      font-size: 13px; font-weight: 600;
+      box-shadow: var(--accent-shadow);
+      white-space: nowrap;
+      transition: background var(--dur-1) var(--ease);
+    }
+    .btn-add:hover { background: var(--accent-hover); }
 
     /* =========================================================================
-       PAGE LAYOUT
+       HERO — headline profit for the chosen period
+       ========================================================================= */
+    .hero {
+      background: linear-gradient(180deg, var(--hero-bg) 0%, var(--hero-bg-2) 100%);
+      color: var(--on-dark);
+      padding: 28px 0 64px;
+    }
+    .hero-inner {
+      max-width: var(--max-w);
+      margin: 0 auto;
+      padding: 0 24px;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 24px;
+      align-items: end;
+    }
+    .chips {
+      display: inline-flex;
+      gap: 4px;
+      padding: 4px;
+      border-radius: 999px;
+      background: var(--on-dark-fill);
+      border: 1px solid var(--on-dark-border);
+      margin-bottom: 18px;
+    }
+    .chip {
+      padding: 6px 14px;
+      border-radius: 999px;
+      font-size: 12.5px; font-weight: 600;
+      color: var(--on-dark-2);
+      white-space: nowrap;
+      transition: color var(--dur-1) var(--ease), background var(--dur-1) var(--ease);
+    }
+    .chip:hover { color: var(--on-dark); }
+    .chip[aria-pressed="true"] { background: var(--on-dark); color: var(--ink); }
+    .hero-label {
+      font-size: 11px; font-weight: 700;
+      letter-spacing: .12em; text-transform: uppercase;
+      color: var(--on-dark-3);
+    }
+    .hero-value {
+      font-family: var(--font-mono);
+      font-size: 56px; font-weight: 500;
+      letter-spacing: -0.04em;
+      line-height: 1.1;
+      margin: 6px 0 10px;
+      color: var(--pos-bright);
+      font-variant-numeric: tabular-nums;
+      overflow-wrap: anywhere;
+    }
+    .hero-value.neg { color: var(--neg-bright); }
+    .hero-meta { display: flex; flex-wrap: wrap; gap: 8px; }
+    .hero-tag {
+      font-size: 12px; font-weight: 600;
+      color: var(--on-dark-2);
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: var(--on-dark-fill);
+      border: 1px solid var(--on-dark-border);
+    }
+    .hero-stats { display: grid; grid-template-columns: repeat(3, minmax(150px, 1fr)); gap: 12px; }
+    .hero-stat {
+      padding: 16px 18px;
+      border-radius: var(--radius-md);
+      background: var(--on-dark-fill);
+      border: 1px solid var(--on-dark-border);
+      min-width: 0;
+    }
+    .hero-stat .label {
+      font-size: 10px; font-weight: 700;
+      letter-spacing: .1em; text-transform: uppercase;
+      color: var(--on-dark-3);
+      margin-bottom: 8px;
+    }
+    .hero-stat .value {
+      font-family: var(--font-mono);
+      font-size: 22px; font-weight: 500;
+      letter-spacing: -0.03em;
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+    }
+    .hero-stat .meta { font-size: 11.5px; color: var(--on-dark-3); margin-top: 4px; }
+
+    /* =========================================================================
+       PAGE LAYOUT + SCREENS
+       body[data-screen] is "home", "add" or "sales". On a wide screen "add" is
+       the Home screen with the calculator focused; on a phone it is its own
+       screen, reached from the + button in the bottom bar.
        ========================================================================= */
     .page {
       max-width: var(--max-w);
-      margin: 0 auto;
-      padding: 28px 24px 80px;
+      margin: -40px auto 0;
+      padding: 0 24px 80px;
+      position: relative;
     }
+    [data-screen="sales"] .hero,
+    [data-screen="sales"] #view-home { display: none; }
+    [data-screen="sales"] .page { margin-top: 24px; }
+    [data-screen="home"] #view-sales,
+    [data-screen="add"] #view-sales { display: none; }
 
-    .split {
+    .home-grid {
       display: grid;
-      grid-template-columns: 1.35fr 1fr;
+      grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
       gap: 20px;
-      margin-bottom: 20px;
+      align-items: start;
     }
-    @media (max-width: 900px) { .split { grid-template-columns: 1fr; } }
+    .home-side { display: grid; gap: 20px; min-width: 0; }
+    @media (max-width: 900px) {
+      .hero-inner { grid-template-columns: minmax(0, 1fr); }
+      .home-grid { grid-template-columns: minmax(0, 1fr); }
+    }
 
     .card {
       background: var(--card);
@@ -192,7 +327,9 @@
       border-radius: var(--radius-lg);
       padding: 24px;
       box-shadow: var(--shadow-sm);
+      min-width: 0;
     }
+    #calc-card { scroll-margin-top: 76px; }
     .card-header {
       display: flex;
       align-items: flex-end;
@@ -215,6 +352,13 @@
       margin: 0;
       color: var(--ink);
     }
+    .link-btn {
+      font-size: 13px; font-weight: 600;
+      color: var(--accent);
+      white-space: nowrap;
+      padding: 4px 0;
+    }
+    .link-btn:hover { color: var(--accent-hover); }
 
     /* =========================================================================
        CALCULATOR
@@ -239,15 +383,48 @@
     .tab[aria-selected="true"] {
       background: var(--card);
       color: var(--ink);
-      box-shadow: 0 1px 3px rgba(15,23,42,.1), 0 0 0 1px var(--border);
+      box-shadow: var(--shadow-tab), 0 0 0 1px var(--border);
     }
     .tab:hover:not([aria-selected="true"]) { color: var(--ink-2); }
+    .card-header .tabs { margin-bottom: 0; }
+
+    /* Platform picker — two large buttons */
+    .seg { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 18px; }
+    .seg-btn {
+      display: flex; align-items: center; gap: 10px;
+      padding: 12px 14px;
+      border-radius: var(--radius-md);
+      border: 1.5px solid var(--border);
+      background: var(--card);
+      font-weight: 600; font-size: 14px;
+      color: var(--ink-3);
+      text-align: left;
+      min-width: 0;
+      transition: border-color var(--dur-1) var(--ease), background var(--dur-1) var(--ease), box-shadow var(--dur-1) var(--ease);
+    }
+    .seg-btn small { display: block; font-size: 11.5px; font-weight: 500; color: var(--ink-4); }
+    .seg-btn:hover { border-color: var(--border-strong); }
+    .seg-btn[aria-selected="true"] {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+      color: var(--ink);
+      box-shadow: 0 0 0 3px var(--accent-ring);
+    }
+    .avatar {
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      display: grid; place-items: center;
+      flex: none;
+      font-weight: 700; font-size: 13px;
+    }
+    .avatar.ebay   { background: var(--ebay-soft); color: var(--ebay-ink); }
+    .avatar.vinted { background: var(--vinted-soft); color: var(--vinted-ink); }
 
     .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
     .form-grid > .full { grid-column: 1 / -1; }
     @media (max-width: 560px) { .form-grid { grid-template-columns: 1fr; } }
 
-    .field { display: flex; flex-direction: column; gap: 5px; }
+    .field { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
     .field label { font-size: 12px; font-weight: 600; color: var(--ink-2); }
     .field .hint { font-size: 11.5px; color: var(--ink-3); }
     .input-wrap { position: relative; display: flex; align-items: center; }
@@ -297,16 +474,18 @@
     .breakdown-row.subtract .value { color: var(--neg); }
     .breakdown-divider { display: none; }
     .breakdown-row.total {
-      background: #0f172a;
+      background: var(--hero-bg);
       border-top: 0;
+      padding: 14px 16px;
     }
-    .breakdown-row.total .label { font-weight: 600; color: rgba(255,255,255,.7); font-size: 13px; }
+    .breakdown-row.total .label { font-weight: 600; color: var(--on-dark-2); font-size: 13px; }
     .breakdown-row.total .value {
-      font-weight: 700;
-      font-size: 20px;
-      color: #34d399;
+      font-weight: 500;
+      font-size: 24px;
+      letter-spacing: -0.03em;
+      color: var(--pos-bright);
     }
-    .breakdown-row.total .value.neg { color: #f87171; }
+    .breakdown-row.total .value.neg { color: var(--neg-bright); }
 
     .actions { display: flex; gap: 8px; margin-top: 18px; flex-wrap: wrap; }
     .btn {
@@ -325,88 +504,132 @@
     }
     .btn-primary {
       background: var(--accent);
-      color: #fff;
+      color: var(--on-dark);
       border-color: var(--accent);
-      box-shadow: 0 1px 4px rgba(37,99,235,.35), 0 2px 8px rgba(37,99,235,.2);
+      box-shadow: var(--accent-shadow);
     }
     .btn-primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
     .btn-primary:active { transform: translateY(1px); box-shadow: none; }
+    #calc-form .btn-primary { flex: 1; padding: 12px 20px; }
     .btn-secondary {
       background: var(--card);
       color: var(--ink-2);
       border-color: var(--border);
-      box-shadow: 0 1px 2px rgba(15,23,42,.05);
+      box-shadow: var(--shadow-xs);
     }
     .btn-secondary:hover { background: var(--bg); border-color: var(--border-strong); color: var(--ink); }
     .btn-ghost { color: var(--ink-3); padding: 10px 14px; }
     .btn-ghost:hover { color: var(--ink-2); background: var(--bg); }
     .btn-danger { background: var(--card); color: var(--neg); border-color: var(--border); }
-    .btn-danger:hover { background: var(--neg-soft); border-color: rgba(220,38,38,.3); }
+    .btn-danger:hover { background: var(--neg-soft); border-color: var(--neg-border); }
     .btn:disabled { opacity: .45; cursor: not-allowed; }
 
     /* =========================================================================
-       SNAPSHOT — coloured stat cards
+       HOME — profit-by-month chart and platform split
        ========================================================================= */
-    .snapshot-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .chart {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      gap: 10px;
+      height: 160px;
+    }
+    .bar-col {
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: flex-end;
+      height: 100%;
+      gap: 6px;
+      min-width: 0;
+      border-radius: var(--radius-sm);
+    }
+    .bar-col:disabled { cursor: default; }
+    .bar-val {
+      font-family: var(--font-mono); font-size: 11px;
+      color: var(--ink-3);
+      white-space: nowrap;
+    }
+    .bar {
+      display: block; flex: none;
+      width: 100%; max-width: 46px;
+      min-height: 3px;
+      border-radius: 6px 6px 2px 2px;
+      background: var(--bar-idle);
+      transition: background var(--dur-1) var(--ease);
+    }
+    .bar-col:not(:disabled):hover .bar { background: var(--ink-4); }
+    .bar-col.current .bar,
+    .bar-col.current:not(:disabled):hover .bar { background: var(--accent); }
+    .bar-col.neg .bar,
+    .bar-col.neg:not(:disabled):hover .bar { background: var(--neg); }
+    .bar-col.current .bar-val { color: var(--ink); font-weight: 500; }
+    .bar-lab {
+      font-size: 11px; font-weight: 600;
+      color: var(--ink-4);
+      text-transform: uppercase; letter-spacing: .06em;
+    }
+    .bar-col.current .bar-lab { color: var(--accent); }
 
-    .stat {
-      padding: 18px;
-      border-radius: var(--radius-md);
-      border: 1.5px solid transparent;
+    .split-head {
+      margin-top: 22px; padding-top: 16px;
+      border-top: 1px solid var(--border);
+      font-size: 10px; font-weight: 700;
+      letter-spacing: .1em; text-transform: uppercase;
+      color: var(--ink-4);
     }
-    .stat .label {
-      font-size: 10px;
-      font-weight: 700;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      margin-bottom: 10px;
+    .split-bar {
+      display: flex; gap: 2px;
+      height: 10px;
+      border-radius: 999px;
+      overflow: hidden;
+      margin: 10px 0;
+      background: var(--bg-subtle);
     }
-    .stat .value {
-      font-family: var(--font-mono);
-      font-size: 26px;
-      font-weight: 600;
-      letter-spacing: -0.03em;
+    .split-bar .e { background: var(--ebay); }
+    .split-bar .v { background: var(--vinted); }
+    .split-legend {
+      display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+      font-size: 12.5px; color: var(--ink-2);
+    }
+    .split-legend b { font-family: var(--font-mono); font-weight: 500; }
+    .key { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; }
+    .key.e { background: var(--ebay); }
+    .key.v { background: var(--vinted); }
+
+    /* =========================================================================
+       HOME — recent sales, grouped by day
+       ========================================================================= */
+    .day-head {
+      display: flex; justify-content: space-between; gap: 12px;
+      font-size: 11px; font-weight: 700;
+      letter-spacing: .08em; text-transform: uppercase;
+      color: var(--ink-4);
+      padding: 14px 0 6px;
+    }
+    .day-head:first-child { padding-top: 0; }
+    .day-head .day-total { font-family: var(--font-mono); font-weight: 500; letter-spacing: 0; }
+    .feed-row {
+      display: flex; align-items: center; gap: 12px;
+      width: calc(100% + 16px);
+      margin: 0 -8px;
+      padding: 10px 8px;
+      border-radius: var(--radius-sm);
+      text-align: left;
+      transition: background var(--dur-1) var(--ease);
+    }
+    .feed-row:hover { background: var(--bg); }
+    .feed-main { flex: 1; min-width: 0; display: block; }
+    .feed-name {
+      display: flex; align-items: center; gap: 8px;
+      font-weight: 600; color: var(--ink);
+    }
+    .feed-name > span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+    .feed-sub { display: block; font-size: 12px; color: var(--ink-3); }
+    .feed-amt {
+      font-family: var(--font-mono); font-weight: 500; font-size: 14px;
       font-variant-numeric: tabular-nums;
-      line-height: 1;
+      color: var(--pos);
+      white-space: nowrap;
     }
-    .stat .value.small { font-size: 22px; }
-    .stat .meta { margin-top: 8px; font-size: 11.5px; font-weight: 500; opacity: .7; }
-
-    /* Revenue — blue */
-    .snapshot-grid .stat:nth-child(1) {
-      background: #eff6ff;
-      border-color: #bfdbfe;
-    }
-    .snapshot-grid .stat:nth-child(1) .label { color: #1d4ed8; }
-    .snapshot-grid .stat:nth-child(1) .value { color: #1e3a8a; }
-    .snapshot-grid .stat:nth-child(1) .meta { color: #1d4ed8; }
-
-    /* Tax — amber */
-    .snapshot-grid .stat:nth-child(2) {
-      background: #fffbeb;
-      border-color: #fde68a;
-    }
-    .snapshot-grid .stat:nth-child(2) .label { color: #b45309; }
-    .snapshot-grid .stat:nth-child(2) .value { color: #92400e; }
-    .snapshot-grid .stat:nth-child(2) .meta { color: #b45309; }
-
-    /* Net profit — emerald (accent class) */
-    .stat.accent {
-      background: #ecfdf5;
-      border-color: #6ee7b7;
-    }
-    .stat.accent .label { color: #065f46; }
-    .stat.accent .value { color: #047857; }
-    .stat.accent .meta { color: #059669; }
-
-    /* Avg per sale — purple */
-    .snapshot-grid .stat:nth-child(4) {
-      background: #f5f3ff;
-      border-color: #ddd6fe;
-    }
-    .snapshot-grid .stat:nth-child(4) .label { color: #6d28d9; }
-    .snapshot-grid .stat:nth-child(4) .value { color: #4c1d95; }
-    .snapshot-grid .stat:nth-child(4) .meta { color: #6d28d9; }
+    .feed-amt.neg { color: var(--neg); }
 
     /* =========================================================================
        SALES HISTORY
@@ -427,14 +650,21 @@
       padding-right: 30px;
       border: 1.5px solid var(--border);
       border-radius: var(--radius-sm);
-      background: var(--card) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%2394a3b8' stroke-width='1.5' fill='none'/%3E%3C/svg%3E") no-repeat right 10px center;
+      background-color: var(--card);
+      /* Dropdown arrow drawn from gradients so it can use a colour variable */
+      background-image:
+        linear-gradient(45deg, transparent 50%, var(--ink-4) 50%),
+        linear-gradient(135deg, var(--ink-4) 50%, transparent 50%);
+      background-position: right 15px center, right 10px center;
+      background-size: 5px 5px, 5px 5px;
+      background-repeat: no-repeat;
       font-size: 13px;
       font-weight: 500;
       color: var(--ink);
       -webkit-appearance: none;
       appearance: none;
       cursor: pointer;
-      box-shadow: 0 1px 2px rgba(15,23,42,.05);
+      box-shadow: var(--shadow-xs);
       transition: border-color var(--dur-1);
     }
     .select-compact:hover { border-color: var(--border-strong); }
@@ -443,7 +673,7 @@
     .summary-row {
       display: grid;
       grid-template-columns: repeat(5, 1fr);
-      gap: 0;
+      gap: 1px;
       background: var(--border);
       border: 1.5px solid var(--border);
       border-radius: var(--radius-md);
@@ -458,7 +688,7 @@
     .summary-cell .value {
       font-family: var(--font-mono);
       font-size: 18px;
-      font-weight: 600;
+      font-weight: 500;
       font-variant-numeric: tabular-nums;
       letter-spacing: -0.025em;
       color: var(--ink);
@@ -496,8 +726,9 @@
       border-bottom: 1px solid var(--border);
       vertical-align: middle;
     }
+    table.sales tbody td:first-child { white-space: nowrap; }
     table.sales tbody tr:last-child td { border-bottom: 0; }
-    table.sales tbody tr:hover { background: #f8fafc; }
+    table.sales tbody tr:hover { background: var(--row-hover); }
     table.sales .num {
       font-family: var(--font-mono); font-variant-numeric: tabular-nums;
       text-align: right; white-space: nowrap; font-size: 12.5px;
@@ -522,9 +753,10 @@
       display: inline-flex; align-items: center; gap: 4px;
       padding: 2px 9px; border-radius: 999px;
       font-size: 11px; font-weight: 700; letter-spacing: .02em;
+      white-space: nowrap; flex: none;
     }
-    .pill.ebay   { background: #dbeafe; color: #1e40af; }
-    .pill.vinted { background: #d1fae5; color: #065f46; }
+    .pill.ebay   { background: var(--ebay-soft); color: var(--ebay-ink); }
+    .pill.vinted { background: var(--vinted-soft); color: var(--vinted-ink); }
     .pill.sale   { background: var(--pos-soft); color: var(--pos); }
     .pill.refund { background: var(--neg-soft); color: var(--neg); }
 
@@ -547,6 +779,7 @@
     .count-note { font-size: 12px; font-weight: 500; color: var(--ink-4); }
 
     .empty { padding: 60px 24px; text-align: center; }
+    .empty.compact { padding: 28px 12px; }
     .empty h3 { font-size: 14px; font-weight: 600; color: var(--ink-2); margin: 0 0 4px; }
     .empty p  { font-size: 13px; margin: 0; color: var(--ink-3); }
 
@@ -555,7 +788,7 @@
        ========================================================================= */
     .modal-backdrop {
       position: fixed; inset: 0;
-      background: rgba(15,23,42,.55);
+      background: var(--backdrop);
       backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
       display: none; z-index: 50;
       align-items: center; justify-content: center; padding: 20px;
@@ -577,7 +810,7 @@
       display: flex; justify-content: space-between; align-items: center;
       padding: 18px 24px; border-bottom: 1px solid var(--border);
     }
-    .modal-title { font-size: 15px; font-weight: 700; letter-spacing: -0.01em; }
+    .modal-title { font-size: 17px; font-weight: 700; letter-spacing: -0.02em; margin: 0; }
     .modal-close {
       width: 28px; height: 28px; border-radius: var(--radius-xs);
       display: grid; place-items: center; color: var(--ink-4);
@@ -599,8 +832,8 @@
       z-index: 100; pointer-events: none;
     }
     .toast {
-      background: #0f172a;
-      color: #fff;
+      background: var(--hero-bg);
+      color: var(--on-dark);
       padding: 11px 18px;
       border-radius: var(--radius-sm);
       font-size: 13px; font-weight: 500;
@@ -609,7 +842,7 @@
       pointer-events: auto; white-space: nowrap;
     }
     .toast.error   { background: var(--neg); }
-    .toast.success { background: #059669; }
+    .toast.success { background: var(--pos); }
     @keyframes toastIn { from { transform:translateY(6px); opacity:0; } to { transform:translateY(0); opacity:1; } }
 
     /* =========================================================================
@@ -643,9 +876,9 @@
     }
     .record-card.refunded { background: var(--neg-soft); border-color: var(--neg); }
     .record-card-top {
-      display: flex; justify-content: space-between;
-      align-items: flex-start; gap: 10px;
+      display: flex; align-items: flex-start; gap: 12px;
     }
+    .record-card-top > div { flex: 1; min-width: 0; }
     .record-card-title {
       font-size: 15px; font-weight: 700; color: var(--ink);
       line-height: 1.3; overflow-wrap: anywhere;
@@ -670,7 +903,7 @@
       text-transform: uppercase; color: var(--ink-4);
     }
     .record-card-headline .value {
-      font-family: var(--font-mono); font-size: 20px; font-weight: 700;
+      font-family: var(--font-mono); font-size: 20px; font-weight: 500;
       font-variant-numeric: tabular-nums; letter-spacing: -0.025em;
     }
     .record-card-headline .value.pos { color: var(--pos); }
@@ -687,7 +920,7 @@
       text-transform: uppercase; color: var(--ink-4); margin-bottom: 3px;
     }
     .record-figure .value {
-      font-family: var(--font-mono); font-size: 13.5px; font-weight: 600;
+      font-family: var(--font-mono); font-size: 13.5px; font-weight: 500;
       font-variant-numeric: tabular-nums; color: var(--ink);
     }
     .record-figure .value.pos { color: var(--pos); }
@@ -706,11 +939,39 @@
       .record-card .row-actions { gap: 4px; }
     }
 
-    /* Filters stack full-width on a phone rather than wrapping raggedly. */
+    /* =========================================================================
+       BOTTOM BAR — phone navigation: Home, Add (+), Sales
+       ========================================================================= */
+    .bottom-nav { display: none; }
+
     @media (max-width: 700px) {
-      .page { padding: 20px 14px 60px; }
+      .main-nav, .btn-add { display: none; }
+      .topbar-inner { padding: 0 14px; height: 54px; }
+
+      .hero { padding: 20px 0 56px; }
+      .hero-inner { padding: 0 14px; gap: 18px; }
+      .chips { display: flex; }
+      .chip { flex: 1; text-align: center; padding: 7px 6px; }
+      .hero-value { font-size: 44px; }
+      .hero-stats { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+      .hero-stat { padding: 12px 8px 12px 10px; }
+      .hero-stat .label { font-size: 9px; letter-spacing: .06em; margin-bottom: 6px; }
+      .hero-stat .value { font-size: 13.5px; }
+      .hero-stat .meta { display: none; }
+
+      /* Bottom padding leaves room for the fixed bar. */
+      .page { padding: 0 14px calc(110px + env(safe-area-inset-bottom)); }
+      [data-screen="sales"] .page { margin-top: 16px; }
       .card { padding: 18px 16px; }
       .card-header { flex-wrap: wrap; }
+
+      /* The calculator is its own screen on a phone. */
+      [data-screen="home"] #calc-card { display: none; }
+      [data-screen="add"] .hero,
+      [data-screen="add"] .home-side { display: none; }
+      [data-screen="add"] .page { margin-top: 16px; }
+
+      /* Filters stack full-width rather than wrapping raggedly. */
       .history-toolbar { align-items: stretch; gap: 10px; }
       .history-toolbar .left,
       .history-toolbar .right { width: 100%; }
@@ -724,18 +985,58 @@
       .table-footer { flex-direction: column; align-items: stretch; }
       .table-footer .actions { display: flex; gap: 8px; }
       .table-footer .actions .btn { flex: 1; }
+
+      .toast-stack { bottom: calc(96px + env(safe-area-inset-bottom)); }
+
+      .bottom-nav {
+        display: grid;
+        grid-template-columns: 1fr auto 1fr;
+        align-items: center;
+        position: fixed; left: 0; right: 0; bottom: 0;
+        z-index: 45;
+        background: var(--card);
+        border-top: 1px solid var(--border);
+        box-shadow: var(--shadow-nav);
+        padding: 6px 14px calc(6px + env(safe-area-inset-bottom));
+      }
+      .bn-item {
+        display: flex; flex-direction: column; align-items: center; gap: 2px;
+        padding: 6px;
+        font-size: 11px; font-weight: 600;
+        color: var(--ink-4);
+      }
+      .bn-item svg { width: 22px; height: 22px; }
+      .bn-item[aria-current="page"] { color: var(--accent); }
+      .bn-add {
+        width: 56px; height: 56px;
+        border-radius: 50%;
+        background: var(--accent);
+        color: var(--on-dark);
+        display: grid; place-items: center;
+        margin-top: -26px;
+        border: 4px solid var(--card);
+        box-shadow: var(--accent-shadow);
+      }
+      .bn-add:focus-visible { border-radius: 50%; }
+      .bn-add[aria-current="page"] { background: var(--accent-hover); }
+      .bn-add svg { width: 24px; height: 24px; }
+    }
+    @media (max-width: 360px) {
+      .hero-value { font-size: 38px; }
+      .brand-text span { display: none; }
     }
 
     @media print {
-      body { background: #fff; }
-      .topbar, .actions, .history-toolbar, .row-actions, .table-footer { display: none !important; }
-      .card, .table-wrap { border: 1px solid #ccc; box-shadow: none; }
+      body { background: var(--card); }
+      .topbar, .hero, .bottom-nav, .actions, .history-toolbar, .row-actions, .table-footer { display: none !important; }
+      .page { margin-top: 0; }
+      .card, .table-wrap { border: 1px solid var(--border-strong); box-shadow: none; }
       table.sales { min-width: 0; font-size: 11px; }
     }
   </style>
 </head>
 
-<body>
+<body data-screen="home">
   <!-- ===================== TOP BAR ===================== -->
   <header class="topbar" role="banner">
     <div class="topbar-inner">
@@ -751,148 +1052,201 @@
           <span>eBay &amp; Vinted tracker</span>
         </div>
       </div>
-      <div class="sync-wrap">
+      <nav class="main-nav" aria-label="Screens">
+        <button class="nav-link" data-go="home" aria-current="page" type="button">
+          <svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M3 9l7-6 7 6v8H3V9z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
+          Home
+        </button>
+        <button class="nav-link" data-go="sales" type="button">
+          <svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M4 5h12M4 10h12M4 15h12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+          Sales history
+        </button>
+      </nav>
+      <div class="topbar-right">
         <div id="sync-pill" class="sync" data-state="idle" role="status" aria-live="polite">
           <span class="dot"></span>
           <span class="sync-label">Loading…</span>
         </div>
+        <button class="btn-add" data-go="add" type="button">+ Add sale</button>
       </div>
     </div>
   </header>
 
-  <div class="page">
-    <div id="view-sales">
-    <!-- ===================== CALCULATOR + SNAPSHOT ===================== -->
-    <div class="split">
-      <!-- Calculator card -->
-      <section class="card" aria-labelledby="calc-title">
-        <div class="card-header">
-          <div>
-            <div class="card-title">Calculate</div>
-            <h2 class="card-heading" id="calc-title">New sale</h2>
-          </div>
+  <!-- ===================== HEADLINE ===================== -->
+  <section class="hero" aria-labelledby="snap-label">
+    <div class="hero-inner">
+      <div>
+        <div class="chips" role="group" aria-label="Period">
+          <button class="chip" data-range="today" aria-pressed="false" type="button">Today</button>
+          <button class="chip" data-range="week" aria-pressed="false" type="button">7 days</button>
+          <button class="chip" data-range="month" aria-pressed="true" type="button">This month</button>
+          <button class="chip" data-range="all" aria-pressed="false" type="button">All time</button>
         </div>
-
-        <div class="tabs" role="tablist" aria-label="Platform">
-          <button class="tab" role="tab" aria-selected="true" data-platform="ebay" type="button">eBay</button>
-          <button class="tab" role="tab" aria-selected="false" data-platform="vinted" type="button">Vinted</button>
+        <div class="hero-label" id="snap-label">Net profit · this month</div>
+        <div class="hero-value" id="snap-profit">£0.00</div>
+        <div class="hero-meta">
+          <span class="hero-tag" id="snap-margin">— margin</span>
+          <span class="hero-tag" id="snap-sales">0 sales</span>
+          <span class="hero-tag" id="snap-refunds">0 refunds</span>
         </div>
-
-        <form id="calc-form" autocomplete="off" novalidate>
-          <div class="form-grid">
-            <div class="field">
-              <label for="f-date">Sale date</label>
-              <input type="date" id="f-date" required />
-            </div>
-            <div class="field">
-              <label for="f-name">Item name</label>
-              <input type="text" id="f-name" maxlength="120" placeholder="e.g. PS4 Slim 500GB" required />
-            </div>
-
-            <div class="field full" id="field-proceeds">
-              <label for="f-proceeds">
-                <span data-platform-label="ebay">Net proceeds from eBay</span>
-                <span data-platform-label="vinted" hidden>Sale price</span>
-              </label>
-              <div class="input-wrap currency">
-                <span class="prefix">£</span>
-                <input type="number" id="f-proceeds" min="0" step="0.01" inputmode="decimal" placeholder="0.00" required />
-              </div>
-              <span class="hint" data-platform-label="ebay">Amount deposited by eBay after their fees.</span>
-              <span class="hint" data-platform-label="vinted" hidden>Buyer pays Vinted fees — seller keeps full sale price.</span>
-            </div>
-
-            <div class="field">
-              <label for="f-cog">Cost of goods</label>
-              <div class="input-wrap currency">
-                <span class="prefix">£</span>
-                <input type="number" id="f-cog" min="0" step="0.01" inputmode="decimal" placeholder="0.00" required />
-              </div>
-            </div>
-
-            <div class="field" id="field-shipping">
-              <label for="f-ship">Shipping cost</label>
-              <div class="input-wrap currency">
-                <span class="prefix">£</span>
-                <input type="number" id="f-ship" min="0" step="0.01" inputmode="decimal" placeholder="0.00" />
-              </div>
-            </div>
-          </div>
-
-          <!-- Live breakdown -->
-          <div class="breakdown" aria-live="polite">
-            <div class="breakdown-row">
-              <span class="label" data-platform-label="ebay">Net proceeds</span>
-              <span class="label" data-platform-label="vinted" hidden>Sale price</span>
-              <span class="value" id="b-revenue">£0.00</span>
-            </div>
-            <div class="breakdown-row subtract">
-              <span class="label">Cost of goods</span>
-              <span class="value" id="b-cog">−£0.00</span>
-            </div>
-            <div class="breakdown-row subtract" id="row-shipping">
-              <span class="label">Shipping</span>
-              <span class="value" id="b-ship">−£0.00</span>
-            </div>
-            <div class="breakdown-row subtract">
-              <span class="label">Tax reserve (20%)</span>
-              <span class="value" id="b-tax">−£0.00</span>
-            </div>
-            <hr class="breakdown-divider" />
-            <div class="breakdown-row total">
-              <span class="label">Net profit</span>
-              <span class="value" id="b-profit">£0.00</span>
-            </div>
-          </div>
-
-          <div class="actions">
-            <button type="submit" class="btn btn-primary" id="btn-save">Save to history</button>
-            <button type="reset" class="btn btn-ghost" id="btn-reset">Reset</button>
-          </div>
-        </form>
-      </section>
-
-      <!-- Snapshot card -->
-      <aside class="card" aria-labelledby="snap-title">
-        <div class="card-header">
-          <div>
-            <div class="card-title">Performance</div>
-            <h2 class="card-heading" id="snap-title">Snapshot</h2>
-          </div>
-          <select id="snap-range" class="select-compact" aria-label="Snapshot range">
-            <option value="all">All time</option>
-            <option value="month" selected>This month</option>
-            <option value="week">Last 7 days</option>
-            <option value="today">Today</option>
-          </select>
+      </div>
+      <div class="hero-stats">
+        <div class="hero-stat">
+          <div class="label">Revenue</div>
+          <div class="value" id="snap-revenue">£0.00</div>
+          <div class="meta">Payouts received</div>
         </div>
-
-        <div class="snapshot-grid">
-          <div class="stat">
-            <div class="label">Revenue</div>
-            <div class="value small" id="snap-revenue">£0.00</div>
-            <div class="meta" id="snap-sales">0 sales</div>
-          </div>
-          <div class="stat">
-            <div class="label">Tax reserve</div>
-            <div class="value small" id="snap-tax">£0.00</div>
-            <div class="meta">Set aside</div>
-          </div>
-          <div class="stat accent">
-            <div class="label">Net profit</div>
-            <div class="value" id="snap-profit">£0.00</div>
-            <div class="meta" id="snap-margin">— margin</div>
-          </div>
-          <div class="stat">
-            <div class="label">Avg per sale</div>
-            <div class="value small" id="snap-avg">£0.00</div>
-            <div class="meta" id="snap-refunds">0 refunds</div>
-          </div>
+        <div class="hero-stat">
+          <div class="label">Tax reserve</div>
+          <div class="value" id="snap-tax">£0.00</div>
+          <div class="meta">Set aside (20%)</div>
         </div>
-      </aside>
+        <div class="hero-stat">
+          <div class="label">Avg per sale</div>
+          <div class="value" id="snap-avg">£0.00</div>
+          <div class="meta">Profit per item</div>
+        </div>
+      </div>
     </div>
+  </section>
+
+  <div class="page">
+    <!-- ===================== HOME ===================== -->
+    <div id="view-home">
+      <div class="home-grid">
+        <!-- Calculator card -->
+        <section class="card" id="calc-card" aria-labelledby="calc-title">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Calculate</div>
+              <h2 class="card-heading" id="calc-title">Add a sale</h2>
+            </div>
+          </div>
+
+          <div class="seg" role="tablist" aria-label="Platform">
+            <button class="seg-btn" role="tab" aria-selected="true" data-platform="ebay" type="button">
+              <span class="avatar ebay" aria-hidden="true">e</span>
+              <span>eBay<small>Payout after fees</small></span>
+            </button>
+            <button class="seg-btn" role="tab" aria-selected="false" data-platform="vinted" type="button">
+              <span class="avatar vinted" aria-hidden="true">V</span>
+              <span>Vinted<small>Full sale price</small></span>
+            </button>
+          </div>
+
+          <form id="calc-form" autocomplete="off" novalidate>
+            <div class="form-grid">
+              <div class="field">
+                <label for="f-date">Sale date</label>
+                <input type="date" id="f-date" required />
+              </div>
+              <div class="field">
+                <label for="f-name">Item name</label>
+                <input type="text" id="f-name" maxlength="120" placeholder="e.g. PS4 Slim 500GB" required />
+              </div>
+
+              <div class="field full" id="field-proceeds">
+                <label for="f-proceeds">
+                  <span data-platform-label="ebay">Net proceeds from eBay</span>
+                  <span data-platform-label="vinted" hidden>Sale price</span>
+                </label>
+                <div class="input-wrap currency">
+                  <span class="prefix">£</span>
+                  <input type="number" id="f-proceeds" min="0" step="0.01" inputmode="decimal" placeholder="0.00" required />
+                </div>
+                <span class="hint" data-platform-label="ebay">Amount deposited by eBay after their fees.</span>
+                <span class="hint" data-platform-label="vinted" hidden>Buyer pays Vinted fees — seller keeps full sale price.</span>
+              </div>
+
+              <div class="field">
+                <label for="f-cog">Cost of goods</label>
+                <div class="input-wrap currency">
+                  <span class="prefix">£</span>
+                  <input type="number" id="f-cog" min="0" step="0.01" inputmode="decimal" placeholder="0.00" required />
+                </div>
+              </div>
+
+              <div class="field" id="field-shipping">
+                <label for="f-ship">Shipping cost</label>
+                <div class="input-wrap currency">
+                  <span class="prefix">£</span>
+                  <input type="number" id="f-ship" min="0" step="0.01" inputmode="decimal" placeholder="0.00" />
+                </div>
+              </div>
+            </div>
+
+            <!-- Live breakdown -->
+            <div class="breakdown" aria-live="polite">
+              <div class="breakdown-row">
+                <span class="label" data-platform-label="ebay">Net proceeds</span>
+                <span class="label" data-platform-label="vinted" hidden>Sale price</span>
+                <span class="value" id="b-revenue">£0.00</span>
+              </div>
+              <div class="breakdown-row subtract">
+                <span class="label">Cost of goods</span>
+                <span class="value" id="b-cog">−£0.00</span>
+              </div>
+              <div class="breakdown-row subtract" id="row-shipping">
+                <span class="label">Shipping</span>
+                <span class="value" id="b-ship">−£0.00</span>
+              </div>
+              <div class="breakdown-row subtract">
+                <span class="label">Tax reserve (20%)</span>
+                <span class="value" id="b-tax">−£0.00</span>
+              </div>
+              <hr class="breakdown-divider" />
+              <div class="breakdown-row total">
+                <span class="label">Net profit</span>
+                <span class="value" id="b-profit">£0.00</span>
+              </div>
+            </div>
+
+            <div class="actions">
+              <button type="submit" class="btn btn-primary" id="btn-save">Save to history</button>
+              <button type="reset" class="btn btn-ghost" id="btn-reset">Reset</button>
+            </div>
+          </form>
+        </section>
+
+        <div class="home-side">
+          <!-- Profit by month -->
+          <section class="card" aria-labelledby="trend-title">
+            <div class="card-header">
+              <div>
+                <div class="card-title">Trend</div>
+                <h2 class="card-heading" id="trend-title">Profit by month</h2>
+              </div>
+              <button class="link-btn" id="link-monthly" type="button">Monthly view →</button>
+            </div>
+            <div class="chart" id="trend-chart"></div>
+            <div class="split-head" id="split-label">Platform split · this month</div>
+            <div class="split-bar" aria-hidden="true">
+              <div class="e" id="split-bar-ebay"></div>
+              <div class="v" id="split-bar-vinted"></div>
+            </div>
+            <div class="split-legend">
+              <span><i class="key e"></i>eBay <b id="split-ebay">£0.00</b></span>
+              <span><i class="key v"></i>Vinted <b id="split-vinted">£0.00</b></span>
+            </div>
+          </section>
+
+          <!-- Recent sales -->
+          <section class="card" aria-labelledby="recent-title">
+            <div class="card-header">
+              <div>
+                <div class="card-title">Activity</div>
+                <h2 class="card-heading" id="recent-title">Recent sales</h2>
+              </div>
+              <button class="link-btn" id="link-all" type="button">See all →</button>
+            </div>
+            <div id="recent-feed"></div>
+          </section>
+        </div>
+      </div>
+    </div><!-- end view-home -->
 
     <!-- ===================== SALES HISTORY ===================== -->
+    <div id="view-sales">
     <section class="card" aria-labelledby="history-title">
       <div class="card-header">
         <div>
@@ -964,6 +1318,21 @@
     </div><!-- end view-sales -->
 
   </div>
+
+  <!-- ===================== BOTTOM BAR (phone) ===================== -->
+  <nav class="bottom-nav" aria-label="Screens">
+    <button class="bn-item" data-go="home" aria-current="page" type="button">
+      <svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M3 9l7-6 7 6v8H3V9z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
+      Home
+    </button>
+    <button class="bn-add" data-go="add" aria-label="Add sale" type="button">
+      <svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M10 4v12M4 10h12" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
+    </button>
+    <button class="bn-item" data-go="sales" type="button">
+      <svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M4 5h12M4 10h12M4 15h12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      Sales
+    </button>
+  </nav>
 
   <!-- ===================== EDIT MODAL ===================== -->
   <div class="modal-backdrop" id="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
@@ -1091,6 +1460,8 @@
         cloudLoaded: false,
       },
       ui: {
+        screen: 'home',       // 'home' | 'add' | 'sales'
+        snapRange: 'month',   // period shown in the headline band
         platform: 'ebay',
         view: 'all',
         range: 'all',
@@ -1432,6 +1803,7 @@
     function renderAll() {
       renderLivePreview();
       renderSnapshot();
+      renderHome();
       renderHistory();
     }
 
@@ -1453,17 +1825,171 @@
     }
 
     function renderSnapshot() {
-      const range = $('#snap-range').value;
+      const range = state.ui.snapRange;
       const subset = state.sales.filter((s) => inRange(s.date, range));
       const agg = aggregate(subset);
+      const rangeLabel = RANGE_LABELS[range] || RANGE_LABELS.all;
+
+      $$('.chip[data-range]').forEach((c) =>
+        c.setAttribute('aria-pressed', String(c.dataset.range === range))
+      );
+      $('#snap-label').textContent = `Net profit · ${rangeLabel}`;
 
       $('#snap-revenue').textContent = fmtGBP(agg.revenue);
       $('#snap-tax').textContent     = fmtGBP(agg.tax);
-      $('#snap-profit').textContent  = fmtGBP(agg.profit);
+      const profitEl = $('#snap-profit');
+      profitEl.textContent = fmtGBP(agg.profit);
+      profitEl.classList.toggle('neg', agg.profit < 0);
       $('#snap-avg').textContent     = fmtGBP(agg.avg);
       $('#snap-sales').textContent   = `${agg.sales} ${agg.sales === 1 ? 'sale' : 'sales'}`;
       $('#snap-refunds').textContent = `${agg.refunds} ${agg.refunds === 1 ? 'refund' : 'refunds'}`;
       $('#snap-margin').textContent  = agg.revenue > 0 ? `${agg.margin.toFixed(1)}% margin` : '— margin';
+
+      // Platform split for the same period
+      const ebay = aggregate(subset.filter((s) => s.platform === 'ebay')).profit;
+      const vinted = aggregate(subset.filter((s) => s.platform === 'vinted')).profit;
+      $('#split-label').textContent = `Platform split · ${rangeLabel}`;
+      $('#split-ebay').textContent = fmtGBP(ebay);
+      $('#split-vinted').textContent = fmtGBP(vinted);
+      // Only positive profit gets a share of the bar; a loss shows as no segment.
+      $('#split-bar-ebay').style.flex = `${Math.max(ebay, 0)} 0 0`;
+      $('#split-bar-vinted').style.flex = `${Math.max(vinted, 0)} 0 0`;
+    }
+
+    const RANGE_LABELS = { today: 'today', week: 'last 7 days', month: 'this month', all: 'all time' };
+
+    const fmtWholeGBP = (n) =>
+      new Intl.NumberFormat('en-GB', {
+        style: 'currency',
+        currency: 'GBP',
+        maximumFractionDigits: 0,
+        ...(Math.abs(n) >= 10000 ? { notation: 'compact', maximumFractionDigits: 1 } : {}),
+      }).format(Number.isFinite(n) ? n : 0);
+
+    // "+£12.00" / "−£3.50" for the recent-sales list
+    const fmtDeltaGBP = (n) => `${n < 0 ? '−' : '+'}${fmtGBP(Math.abs(n))}`;
+
+    const byNewest = (a, b) =>
+      a.date < b.date ? 1 : a.date > b.date ? -1 : a.createdAt < b.createdAt ? 1 : a.createdAt > b.createdAt ? -1 : 0;
+
+    function dayLabel(dateStr) {
+      const [y, m, d] = dateStr.split('-').map(Number);
+      const day = new Date(y, m - 1, d);
+      if (Number.isNaN(day.getTime())) return dateStr;
+      const now = new Date();
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const diff = Math.round((today - day) / 86400000);
+      if (diff === 0) return 'Today';
+      if (diff === 1) return 'Yesterday';
+      return day.toLocaleDateString('en-GB', {
+        weekday: 'short', day: 'numeric', month: 'short',
+        ...(y !== now.getFullYear() ? { year: 'numeric' } : {}),
+      });
+    }
+
+    const RECENT_COUNT = 6;
+    const TREND_MONTHS = 6;
+
+    /* Home screen: profit-by-month chart and the recent-sales list. */
+    function renderHome() {
+      // --- Profit by month: the last six calendar months, ending this month ---
+      const now = new Date();
+      const pad = (n) => String(n).padStart(2, '0');
+      const months = [];
+      for (let i = TREND_MONTHS - 1; i >= 0; i--) {
+        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        const key = `${d.getFullYear()}-${pad(d.getMonth() + 1)}`;
+        const items = state.sales.filter((s) => s.date.slice(0, 7) === key);
+        months.push({
+          key,
+          count: items.length,
+          profit: aggregate(items).profit,
+          short: d.toLocaleString('en-GB', { month: 'short' }),
+          long: d.toLocaleString('en-GB', { month: 'long', year: 'numeric' }),
+          current: i === 0,
+        });
+      }
+      const peak = Math.max(...months.map((m) => Math.abs(m.profit)), 0);
+      $('#trend-chart').innerHTML = months.map((m) => {
+        const ratio = peak > 0 ? Math.abs(m.profit) / peak : 0;
+        const cls = `${m.current ? ' current' : ''}${m.profit < 0 ? ' neg' : ''}`;
+        const tip = m.count ? `${m.long}: ${fmtGBP(m.profit)} — view sales` : `${m.long}: no sales`;
+        return `
+          <button type="button" class="bar-col${cls}" data-month="${m.key}" title="${esc(tip)}" aria-label="${esc(tip)}"${m.count ? '' : ' disabled'}>
+            <span class="bar-val">${m.count ? fmtWholeGBP(m.profit) : '—'}</span>
+            <span class="bar" style="height: calc((100% - 46px) * ${ratio.toFixed(3)})"></span>
+            <span class="bar-lab">${esc(m.short)}</span>
+          </button>`;
+      }).join('');
+
+      // --- Recent sales, grouped by day with each day's total ---
+      const feed = $('#recent-feed');
+      if (state.sales.length === 0) {
+        feed.innerHTML = `
+          <div class="empty compact">
+            <h3>No sales yet</h3>
+            <p>Add your first sale and it will show up here.</p>
+          </div>`;
+        return;
+      }
+      const recent = [...state.sales].sort(byNewest).slice(0, RECENT_COUNT);
+      let html = '';
+      let lastDate = null;
+      for (const s of recent) {
+        if (s.date !== lastDate) {
+          lastDate = s.date;
+          const dayTotal = aggregate(state.sales.filter((x) => x.date === s.date)).profit;
+          html += `
+            <div class="day-head">
+              <span>${esc(dayLabel(s.date))}</span>
+              <span class="day-total">${fmtDeltaGBP(dayTotal)}</span>
+            </div>`;
+        }
+        const isRefund = s.status === 'refund';
+        const amount = isRefund ? -s.profit : s.profit;
+        html += `
+          <button type="button" class="feed-row" data-id="${s.id}" title="Edit this sale">
+            <span class="avatar ${s.platform}" aria-hidden="true">${s.platform === 'ebay' ? 'e' : 'V'}</span>
+            <span class="feed-main">
+              <span class="feed-name"><span>${esc(s.name)}</span>${isRefund ? '<span class="pill refund">Refund</span>' : ''}</span>
+              <span class="feed-sub">${s.platform === 'ebay' ? 'eBay · payout' : 'Vinted · sold'} ${fmtGBP(s.proceeds)}</span>
+            </span>
+            <span class="feed-amt ${amount < 0 ? 'neg' : ''}">${fmtDeltaGBP(amount)}</span>
+          </button>`;
+      }
+      feed.innerHTML = html;
+    }
+
+    /* Switch between the Home, Add and Sales screens. */
+    function showScreen(screen) {
+      const isPhone = window.matchMedia('(max-width: 700px)').matches;
+      state.ui.screen = screen;
+      document.body.dataset.screen = screen;
+      $$('.nav-link[data-go]').forEach((n) => {
+        const on = n.dataset.go === screen || (screen === 'add' && n.dataset.go === 'home');
+        if (on) n.setAttribute('aria-current', 'page'); else n.removeAttribute('aria-current');
+      });
+      $$('.bottom-nav [data-go]').forEach((n) => {
+        if (n.dataset.go === screen) n.setAttribute('aria-current', 'page'); else n.removeAttribute('aria-current');
+      });
+      if (screen === 'add' && !isPhone) {
+        // Wide screens keep the calculator on Home — bring it into view.
+        $('#calc-card').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        $('#f-name').focus({ preventScroll: true });
+      } else {
+        window.scrollTo(0, 0);
+        if (screen === 'add') $('#f-name').focus({ preventScroll: true });
+      }
+    }
+
+    function showMonthlyView() {
+      state.ui.view = 'monthly';
+      state.ui.monthKey = null;
+      $$('[data-view]').forEach((t) =>
+        t.setAttribute('aria-selected', String(t.dataset.view === 'monthly'))
+      );
+      renderHistory();
+      showScreen('sales');
     }
 
     function renderHistory() {
@@ -1495,7 +2021,7 @@
           <div class="empty">
             <h3>Nothing here yet</h3>
             <p>${state.sales.length === 0
-              ? 'Add your first sale using the calculator above.'
+              ? 'Add your first sale from the Home screen.'
               : 'No sales match the current filters.'}</p>
           </div>`;
         count.textContent = state.sales.length === 0 ? 'No sales yet.' : '0 of ' + state.sales.length;
@@ -1623,6 +2149,7 @@
       const cards = sorted.map((s) => `
         <div class="record-card ${s.status === 'refund' ? 'refunded' : ''}">
           <div class="record-card-top">
+            <span class="avatar ${s.platform}" aria-hidden="true">${s.platform === 'ebay' ? 'e' : 'V'}</span>
             <div>
               <div class="record-card-title">${esc(s.name)}</div>
               <div class="record-card-sub">${esc(s.date)}</div>
@@ -1822,6 +2349,7 @@
       $('#filter-platform').value = 'all';
       $('#filter-search').value = '';
       renderHistory();
+      if (state.ui.screen !== 'sales') showScreen('sales');
     }
 
     function exportCSV() {
@@ -1893,7 +2421,7 @@
      * ========================================================================= */
     function switchPlatform(platform) {
       state.ui.platform = platform;
-      $$('.tabs [data-platform]').forEach((t) =>
+      $$('[data-platform]').forEach((t) =>
         t.setAttribute('aria-selected', String(t.dataset.platform === platform))
       );
       $$('[data-platform-label]').forEach((el) => {
@@ -2009,7 +2537,7 @@
       $('#f-date').value = todayISO();
 
       // Calculator platform tabs
-      $$('.tabs [data-platform]').forEach((tab) => {
+      $$('[data-platform]').forEach((tab) => {
         tab.addEventListener('click', () => switchPlatform(tab.dataset.platform));
       });
 
@@ -2069,7 +2597,27 @@
       $('#filter-search').addEventListener('input', (e) => {
         state.ui.search = e.target.value; renderHistory();
       });
-      $('#snap-range').addEventListener('change', renderSnapshot);
+      $$('.chip[data-range]').forEach((chip) => {
+        chip.addEventListener('click', () => {
+          state.ui.snapRange = chip.dataset.range;
+          renderSnapshot();
+        });
+      });
+
+      // Screen navigation (top bar on wide screens, bottom bar on a phone)
+      $$('[data-go]').forEach((btn) => {
+        btn.addEventListener('click', () => showScreen(btn.dataset.go));
+      });
+      $('#link-all').addEventListener('click', () => showScreen('sales'));
+      $('#link-monthly').addEventListener('click', showMonthlyView);
+      $('#trend-chart').addEventListener('click', (e) => {
+        const bar = e.target.closest('[data-month]');
+        if (bar && !bar.disabled) goToMonth(bar.dataset.month);
+      });
+      $('#recent-feed').addEventListener('click', (e) => {
+        const row = e.target.closest('[data-id]');
+        if (row) openEdit(row.dataset.id);
+      });
 
       // Footer actions
       $('#btn-export').addEventListener('click', exportCSV);
